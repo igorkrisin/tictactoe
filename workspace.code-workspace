@@ -1,0 +1,38 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"iostream": "cpp",
+			"algorithm": "c",
+			"random": "c",
+			"__bit_reference": "cpp",
+			"__functional_base": "cpp",
+			"__node_handle": "cpp",
+			"atomic": "cpp",
+			"bitset": "cpp",
+			"chrono": "cpp",
+			"cstddef": "cpp",
+			"deque": "cpp",
+			"__memory": "cpp",
+			"functional": "cpp",
+			"iterator": "cpp",
+			"limits": "cpp",
+			"locale": "cpp",
+			"memory": "cpp",
+			"optional": "cpp",
+			"ratio": "cpp",
+			"system_error": "cpp",
+			"tuple": "cpp",
+			"type_traits": "cpp",
+			"vector": "cpp",
+			"istream": "cpp",
+			"ostream": "cpp",
+			"array": "cpp",
+			"utility": "cpp"
+		}
+	}
+}
