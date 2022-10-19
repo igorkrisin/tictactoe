@@ -1,18 +1,15 @@
-#include <iostream>
+#include<iostream>
 
-template<typename T>
-T min_num(T a, T b){
-   return a>b?a:b;
+
+
+
+
+
+int main() {
+    if (__cplusplus == 201703L) std::cout << "C++17\n";
+    else if (__cplusplus == 201402L) std::cout << "C++14\n";
+    else if (__cplusplus == 201103L) std::cout << "C++11\n";
+    else if (__cplusplus == 199711L) std::cout << "C++98\n";
+    else std::cout << "pre-standard C++\n";
 }
 
-template<typename T>
-int foo(T x){
-	return sizeof(x);
-}
-
-
-int main(){
-   std::cout<<min_num<double>(42.9, 13.4)<<"\n";
-   std::cout<<foo<char>(42)<<std::endl;
-   return 0;
-}

@@ -2,12 +2,21 @@
 #include <array>
 #include <ctime>
 #include <vector>
+#define EMPTY ' ' 
 using namespace std;
 
 enum state { Xwin, Owin, notEnd, Tie};
+void printBoard(array<char,9> board);
 
+char compSimb = 'o';
+char userSimb = 'x';
 
-int evaluatMove(array <char,9> board, char whoMove);
+int MIN = false;
+int MAX = true;
+
+int bestScore;
+
+//int minimax(array<char,9> board, int depth, bool State);
 
 bool isNotEnd(array<char,9> board) {
     for(int i = 0; i < 9; i++) {
@@ -32,11 +41,11 @@ state checkState(array<char,9> board) {
 
     }
 
-    if(board.at(0*3+0) == board.at(1*3+1) && board.at(1*3+1) == board.at(2*3+2) && board.at(0*3+0) != ' ') {
+    if(board.at(0*3+0) == board.at(1*3+1) && board.at(1*3+1) == board.at(2*3+2) && board[0*3+0] != ' ') {
 	return(board.at(0*3+0)) == 'x'?  Xwin: Owin;
     }
 
-    else if(board.at(0*3+2) == board.at(1*3+1) && board.at(1*3+1) == board.at(2*3+0) && board.at(0*3+2) != ' ') {
+    else if(board.at(0*3+2) == board.at(1*3+1) && board.at(1*3+1) == board.at(2*3+0) && board[0*3+2] != ' ') {
         return(board.at(0*3+2)) == 'x'?  Xwin: Owin;
     }
 
@@ -49,6 +58,7 @@ state checkState(array<char,9> board) {
 
 }
 
+//
 
 
 void printState(array<char,9> board) {
@@ -68,16 +78,114 @@ void printState(array<char,9> board) {
 }
 
 
-array<char,9> moveRand(array<char,9> board, char x) {
+/* array<char,9> moveRand(array<char,9> board, char x) {
     srand(time(NULL));
     int index = rand()%10;
-    while(board.at(index) != ' ') {
+    while(board[index] != ' ') {
         index = rand()%10;
     }
     board[index] = x;
     return board;
 
+} */
+
+int max(int x, int y) {
+    if (x > y) {
+        return x;
+    }
+    else {
+        return y;
+    }
 }
+
+int min(int x, int y) {
+    if (x < y) {
+        return x;
+    }
+    else {
+        return y;
+    }
+}
+
+int minimax(array<char,9> &board, int depth, bool State) {
+    if(checkState(board) == Xwin) {
+        return -100;
+    }
+    if(checkState(board) == Owin) {
+        return 100;
+    }
+    if(checkState(board) == Tie) {
+        return 0;
+    }
+    // choise move which best for me
+    if(State) {
+        bestScore = - 1000;
+        for (int i = 0; i < 9; i++)
+        {
+            if(board.at(i) == EMPTY) {
+                board.at(i) = compSimb;
+                int score = minimax(board, depth+1, MIN);
+                board.at(i) = EMPTY;
+                bestScore = max(bestScore, score);
+                //cout << "printBoard COMP:";
+                //printBoard(board);
+                //cout << endl;
+            }
+        }
+        
+    // choise move which best for enemy
+    }
+    else {
+        bestScore = 1000;
+        for (int i = 0; i < 9; i++)
+        {
+            if(board.at(i) == EMPTY) {
+                board.at(i) = userSimb;
+                int score = minimax(board, depth+1, MAX);
+                board.at(i) = EMPTY;
+                bestScore = min(bestScore, score);
+                //cout << "printBoard USER:";
+                //printBoard(board);
+                //cout << endl;
+            }
+        }
+
+    }
+    //cout << "bestScore: " << bestScore << endl;
+    return bestScore;
+
+    
+}
+
+array<char,9> copyAray(array<char,9> board1, array<char,9> board2) {
+
+    for (int i = 0; i < 9; i++)
+    {
+        board1[i] = board2[i];
+    }
+    return board1;
+}
+
+array<char,9> MoveComp(array<char,9> &board, char whoMove){
+    bestScore = -1000;
+    array<char,9> newBoard = board;
+    for(int i = 0; i < 9; i++) {
+        if(newBoard.at(i) == ' ') {
+            newBoard.at(i) = compSimb;
+            int score = minimax(newBoard, 0, MIN);
+            newBoard.at(i) = ' ';
+            if(score > bestScore){
+                cout << "best score New Board  ";
+                newBoard.at(i) = compSimb;
+            }
+        }
+    }
+   
+    board = copyAray(board, newBoard);
+    return board;
+}
+
+
 
 
 void printBoard(array<char,9> board) {
@@ -90,17 +198,19 @@ void printBoard(array<char,9> board) {
     }
 
 }
-
+//1,2 4,5 7,8
 
 array<char,9> clearBoard(array<char,9> &board) {
 
     for (int i = 0; i < 9; ++i) {
-        if(board.at(i) != ' '){
+        if(board[i] != ' '){
             board.at(i) = ' ';
         }
     }
     return board;
 }
+
+
 
 
 vector<array<char,9>> allBoard(array<char,9> board, char whoMove) {
@@ -118,102 +228,21 @@ vector<array<char,9>> allBoard(array<char,9> board, char whoMove) {
 }
 
 
-int bestScore(vector<int> evaluatMove) {
-int bScore = evaluatMove[0];
-for(int i = 0; i < evaluatMove.size();i++) {
-    if(bScore > evaluatMove.at(i)) {
-	bScore = evaluatMove.at(i);
-    }
-}
-    return bScore;
-}
-
-int minScore(vector<int> evaluatMove) {
-int mScore = evaluatMove[0];
-for(int i = 0; i < evaluatMove.size();i++) {
-    if(mScore < evaluatMove.at(i)) {
-	mScore = evaluatMove.at(i);
-    }
-}
-    return mScore;
-}
-
-int indexMaxEl(vector<int> allEvaluat) {
-    int bScore = allEvaluat[0];
-    int index = 0;
-    for(int i = 0;i < allEvaluat.size(); i++) {
-        if(bScore > allEvaluat.at(i)){
-            bScore = allEvaluat.at(i);
-            index = i;
-        }
-    }
-    cout << "index max: " << index << endl;
-    return index;
-}
-
-
-int indexMinEl(vector<int> allEvaluat) {
-    int mScore = allEvaluat[0];
-    int index = 0;
-    for(int i = 0;i < allEvaluat.size(); i++) {
-	if(mScore < allEvaluat.at(i)){
-	    mScore = allEvaluat.at(i);
-	    index = i;
-	}
-    }
-    cout << "index min: " << index << endl;
-    return index;
-}
-
-array<char,9> bestBoard(array<char,9> board, char whoMove) {
-    vector<array<char,9>> aBoards = allBoard(board, whoMove);
-    vector<int> allEvaluat;
-    for(int i = 0; i < aBoards.size(); i++) {
-	    allEvaluat.push_back(evaluatMove(aBoards.at(i), whoMove));
-        cout << allEvaluat[i] << endl;
-    }
-
-    int index = indexMaxEl(allEvaluat);
-    return aBoards[index];
-}
-
-
 
 
 
 void printAllBoard(vector <array<char, 9>> allBoard) {
-    //cout << allBoard.size() << endl;
+    cout << allBoard.size() << endl;
     for(int i = 0; i < allBoard.size();i++) {
 	printBoard(allBoard.at(i));
 	cout << ' ';
     }
 }
-// x - user o - ai
-int evaluatMove(array <char,9> board, char whoMove) {
-    state S = checkState(board);
-    
-    if(S == Xwin) {
-	return -1;
-}
-    else if(S == Owin) {
-	return 1;
-    }
-    else if(S == Tie) {
-	return 0;
-    }
-    vector<array<char,9>> allBoards = allBoard(board, whoMove == 'x'? 'o':'x');
-    vector<int> allEvaluat;
-    for(int i = 0; i < allBoards.size();i++) {
-	allEvaluat.push_back(evaluatMove(allBoards.at(i), whoMove));
-    }
-    /* if(whoMove == 'o') {
-	return bestScore(allEvaluat);
-    }
-    else if(whoMove == 'x') {
-	return minScore(allEvaluat);
-    } */
-    return (whoMove =='o' ? bestScore : minScore)(allEvaluat);
-}
+
+
+//TODO  поправить все индексы в .at()
+//TODO УЗНАТЬ версию STD
+//Minimax 
 
 
 int main() {
@@ -224,15 +253,17 @@ int main() {
                            ' ', ' ', ' ',
                            ' ', ' ', ' '};
 /////////////////////////////////////////////
-//printBoard(bestBoard(board, 'x'));
+//printAllBoard(allBoard(board, 'x'));
+
+
 
 
 
 //////////////////////////////////////////
 
-   bool flag = true;
-    char simbolPlayer = 'x';
-    char simbolComp = 'o';
+    bool flag = true;
+    //char simbolPlayer = ' ';
+    //char simbolComp = ' ';
     while(true) {
         char answer;
 
@@ -254,7 +285,6 @@ int main() {
             }
         } */
         int indexPlayer = 0;
-        printBoard(board);
         cout << "Choise number empty cell: \n";
         cin >> indexPlayer;
         if(board[indexPlayer] != ' '){
@@ -262,7 +292,7 @@ int main() {
             continue;
         }
 
-        board[indexPlayer] = simbolPlayer;
+        board[indexPlayer] = userSimb;
         if(!isNotEnd(board)){
             cout << "Tie\n";
             cout << "try again? press y or n\n";
@@ -278,7 +308,7 @@ int main() {
             }
         }
         cout << "Comp move... \n";
-        board = bestBoard(board, simbolComp);
+        board = MoveComp(board, compSimb);
         printBoard(board);
 
             if(checkState(board) == Xwin) {
