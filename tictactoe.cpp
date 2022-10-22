@@ -203,7 +203,7 @@ void printAllBoardGoriz(vector <array<char, 9>> allBoard, vector<int> allEvaluat
     
     
     for(int i = 0; i < allEvaluat.size();i++) {
-	cout << " "  << allEvaluat.at(i) << " ";
+	    cout << " "  << allEvaluat.at(i) << " ";
     }
     cout << endl;
 }
@@ -220,7 +220,7 @@ char who_move(char simb) {
 }
 
 void printVector(vector<int> vec){
-    cout << "PRINT VECTOR: ";
+    //cout << "PRINT VECTOR: ";
     for (int i = 0; i < vec.size(); i++)
     {
         cout << vec.at(i) << " ";
@@ -234,51 +234,50 @@ int evaluatMove(array <char,9> &board, char whoMove, int Depth) {
     
     if(checkState(board) == Xwin) {
             //
-            cout << "XW ";
+            //cout << "XW ";
 	    return -1;
     }
     else if(checkState(board) == Owin) {
             ///
-            cout << "OW ";
+           // cout << "OW ";
 	    return 1;
     }
     else if(checkState(board) == Tie) {
-        cout << "Ti ";
+        //cout << "Ti ";
             ///напечатать отельную доску с оценкой и depth
 	    return 0;
     }
-    vector<array<char,9>> allBoards = allBoard(board, whoMove == 'o'? 'x':'o');
+    vector<array<char,9>> allBoards = allBoard(board, who_move(whoMove));
     vector<int> allEvaluat;
     for(int i = 0; i < allBoards.size();i++) {
-	    allEvaluat.push_back(evaluatMove(allBoards.at(i), whoMove, Depth+1));
+	    allEvaluat.push_back(evaluatMove(allBoards.at(i), who_move(whoMove), Depth+1));
     }
-    printVector(allEvaluat);
+    //printVector(allEvaluat);
     cout << endl << "Depth: " << Depth << endl;
-    printAllBoardGoriz(allBoard(board, 'o'), allEvaluat);
-    return (whoMove =='o' ? bestScore : minScore)(allEvaluat);
+    printAllBoardGoriz(allBoard(board, who_move(whoMove)), allEvaluat);
+    return (whoMove =='o' ? minScore : bestScore)(allEvaluat);
 }
+
+
 
 
 int main() {
 
-    array<char,9> board = {'x', 'o', 'o',
-                           'x', ' ', ' ',
+    array<char,9> board = {' ', ' ', ' ',
+                           ' ', ' ', ' ',
                            ' ', ' ', ' '};
-    bestBoard(board, 'o');
-    //vector<int> newVect {1,2,3,4,5};
-    //printVector(newVect);
-    cout << "check State " << checkState(board);
+     
+    
+    
 
-//////////////////////////////////////////
-
-  /*bool flag = true;
-    char simbolPlayer = 'x';
-    char simbolComp = 'o';
+   bool flag = true;
+    char simbol = 'x';
+    
     while(true) {
         char answer;
 
 
-        if(flag == true) {
+         /* if(flag == true) {
             cout << "Choise simbol for playing - o / x: \n";
             cin >> simbolPlayer;
             if(simbolPlayer == 'o') {
@@ -293,7 +292,7 @@ int main() {
                 cout << "selected sombol incorrect, please try again\n";
                 continue;
             }
-        } 
+        }   */
         int indexPlayer = 0;
         printBoard(board);
         cout << "Choise number empty cell: \n";
@@ -304,7 +303,21 @@ int main() {
         }
         
 
-        board[indexPlayer] = simbolPlayer;
+        board[indexPlayer] = simbol;
+        if(checkState(board) == Xwin) {
+            cout << "X win\n";
+                printBoard(board);
+                cout << "try again? press y or n\n";
+                cin >> answer;
+                if(answer == 'y') {
+                    clearBoard(board);
+                    flag = true;
+                    continue;
+                }
+                else {
+                    break;
+                }
+        }
         if(!isNotEnd(board)){
             cout << "Tie\n";
             cout << "try again? press y or n\n";
@@ -320,11 +333,12 @@ int main() {
             }
         }
         cout << "Comp move... \n";
-        board = bestBoard(board, simbolComp);
-        printBoard(board);
+        board = bestBoard(board, who_move(simbol));
+       // printBoard(board);
 
             if(checkState(board) == Xwin) {
                 cout << "X win\n";
+                printBoard(board);
                 cout << "try again? press y or n\n";
                 cin >> answer;
                 if(answer == 'y') {
@@ -338,6 +352,7 @@ int main() {
             }
             else if(checkState(board) == Owin) {
                 cout << "0 win\n";
+                printBoard(board);
                 cout << "try again? press y or n\n";
                 cin >> answer;
                 if(answer == 'y') {
@@ -352,6 +367,7 @@ int main() {
             }
             else if(checkState(board) == Tie) {
                 cout << "Tie\n";
+                printBoard(board);
                 cout << "try again? press y or n\n";
                 cin >> answer;
                 if(answer == 'y') {
@@ -367,8 +383,8 @@ int main() {
     }
 
 
-*/
 
+ 
  
     return 0;
 }
