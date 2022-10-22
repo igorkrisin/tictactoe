@@ -7,7 +7,8 @@ using namespace std;
 enum state { Xwin, Owin, notEnd, Tie};
 
 
-int evaluatMove(array <char,9> board, char whoMove);
+int evaluatMove(array <char,9> &board, char whoMove, int depth);
+void printAllBoard(vector <array<char, 9>> allBoard);
 
 bool isNotEnd(array<char,9> board) {
     for(int i = 0; i < 9; i++) {
@@ -18,7 +19,7 @@ bool isNotEnd(array<char,9> board) {
     return false;
 }
 
-state checkState(array<char,9> board) {
+state checkState(array<char,9> &board) {
     for(int y = 0; y < 3; y++){
     
         if(board.at(y*3+0) == board.at(y*3+1) && board.at(y*3+1) == board.at(y*3+2) && board.at(y*3) != ' ') {
@@ -107,11 +108,11 @@ vector<array<char,9>> allBoard(array<char,9> board, char whoMove) {
     vector <array<char, 9>> allBoard;
     
     for(int i = 0; i < 9; i++) {
-	if(board.at(i) == ' ') {
-	    array<char,9> newBoard = board;
-	    newBoard.at(i) = whoMove;
-	    allBoard.push_back(newBoard);
-	}
+        if(board.at(i) == ' ') {
+            array<char,9> newBoard = board;
+            newBoard.at(i) = whoMove;
+            allBoard.push_back(newBoard);
+        }
     }
     
     return allBoard;
@@ -121,8 +122,8 @@ vector<array<char,9>> allBoard(array<char,9> board, char whoMove) {
 int bestScore(vector<int> evaluatMove) {
 int bScore = evaluatMove[0];
 for(int i = 0; i < evaluatMove.size();i++) {
-    if(bScore > evaluatMove.at(i)) {
-	bScore = evaluatMove.at(i);
+    if(evaluatMove.at(i) > bScore) {
+	    bScore = evaluatMove.at(i);
     }
 }
     return bScore;
@@ -131,8 +132,8 @@ for(int i = 0; i < evaluatMove.size();i++) {
 int minScore(vector<int> evaluatMove) {
 int mScore = evaluatMove[0];
 for(int i = 0; i < evaluatMove.size();i++) {
-    if(mScore < evaluatMove.at(i)) {
-	mScore = evaluatMove.at(i);
+    if(evaluatMove.at(i) < mScore) {
+	    mScore = evaluatMove.at(i);
     }
 }
     return mScore;
@@ -142,12 +143,13 @@ int indexMaxEl(vector<int> allEvaluat) {
     int bScore = allEvaluat[0];
     int index = 0;
     for(int i = 0;i < allEvaluat.size(); i++) {
-        if(bScore > allEvaluat.at(i)){
+        if(allEvaluat.at(i) > bScore){
             bScore = allEvaluat.at(i);
             index = i;
         }
     }
     cout << "index max: " << index << endl;
+    
     return index;
 }
 
@@ -156,7 +158,7 @@ int indexMinEl(vector<int> allEvaluat) {
     int mScore = allEvaluat[0];
     int index = 0;
     for(int i = 0;i < allEvaluat.size(); i++) {
-	if(mScore < allEvaluat.at(i)){
+	if(allEvaluat.at(i) < mScore){
 	    mScore = allEvaluat.at(i);
 	    index = i;
 	}
@@ -169,75 +171,114 @@ array<char,9> bestBoard(array<char,9> board, char whoMove) {
     vector<array<char,9>> aBoards = allBoard(board, whoMove);
     vector<int> allEvaluat;
     for(int i = 0; i < aBoards.size(); i++) {
-	    allEvaluat.push_back(evaluatMove(aBoards.at(i), whoMove));
-        cout << allEvaluat[i] << endl;
+	    allEvaluat.push_back(evaluatMove(aBoards.at(i), whoMove, 0));
     }
-
+    
     int index = indexMaxEl(allEvaluat);
     return aBoards[index];
 }
 
 
-
-
-
 void printAllBoard(vector <array<char, 9>> allBoard) {
-    //cout << allBoard.size() << endl;
     for(int i = 0; i < allBoard.size();i++) {
-	printBoard(allBoard.at(i));
-	cout << ' ';
+	    printBoard(allBoard.at(i));
+	    cout << ' ';
     }
 }
-// x - user o - ai
-int evaluatMove(array <char,9> board, char whoMove) {
-    state S = checkState(board);
+
+
+void printAllBoardGoriz(vector <array<char, 9>> allBoard, vector<int> allEvaluat) {
+    for(int z = 0; z < 3; z++) {
+	
+	for(int i = 0; i < allBoard.size();i++) {
+	    for(int y = 0; y < 3; y++) {
+		cout << allBoard[i][z*3+y];
+	    }
+	    cout << "|";
+	
+	
+    }
+    cout  << '\n';
+    }
     
-    if(S == Xwin) {
-	return -1;
+    
+    for(int i = 0; i < allEvaluat.size();i++) {
+	cout << " "  << allEvaluat.at(i) << " ";
+    }
+    cout << endl;
 }
-    else if(S == Owin) {
-	return 1;
+
+char who_move(char simb) {
+    
+    if(simb == 'o') {
+        return 'x';
     }
-    else if(S == Tie) {
-	return 0;
+    else if(simb == 'x') {
+        return 'o';
     }
-    vector<array<char,9>> allBoards = allBoard(board, whoMove == 'x'? 'o':'x');
+    return 'E';
+}
+
+void printVector(vector<int> vec){
+    cout << "PRINT VECTOR: ";
+    for (int i = 0; i < vec.size(); i++)
+    {
+        cout << vec.at(i) << " ";
+    }
+    cout << endl;
+}
+
+ 
+// x - user o - ai
+int evaluatMove(array <char,9> &board, char whoMove, int Depth) {
+    
+    if(checkState(board) == Xwin) {
+            //
+            cout << "XW ";
+	    return -1;
+    }
+    else if(checkState(board) == Owin) {
+            ///
+            cout << "OW ";
+	    return 1;
+    }
+    else if(checkState(board) == Tie) {
+        cout << "Ti ";
+            ///напечатать отельную доску с оценкой и depth
+	    return 0;
+    }
+    vector<array<char,9>> allBoards = allBoard(board, whoMove == 'o'? 'x':'o');
     vector<int> allEvaluat;
     for(int i = 0; i < allBoards.size();i++) {
-	allEvaluat.push_back(evaluatMove(allBoards.at(i), whoMove));
+	    allEvaluat.push_back(evaluatMove(allBoards.at(i), whoMove, Depth+1));
     }
-    /* if(whoMove == 'o') {
-	return bestScore(allEvaluat);
-    }
-    else if(whoMove == 'x') {
-	return minScore(allEvaluat);
-    } */
+    printVector(allEvaluat);
+    cout << endl << "Depth: " << Depth << endl;
+    printAllBoardGoriz(allBoard(board, 'o'), allEvaluat);
     return (whoMove =='o' ? bestScore : minScore)(allEvaluat);
 }
 
 
 int main() {
 
-    
-
-    array<char,9> board = {' ', ' ', ' ',
-                           ' ', ' ', ' ',
+    array<char,9> board = {'x', 'o', 'o',
+                           'x', ' ', ' ',
                            ' ', ' ', ' '};
-/////////////////////////////////////////////
-//printBoard(bestBoard(board, 'x'));
-
-
+    bestBoard(board, 'o');
+    //vector<int> newVect {1,2,3,4,5};
+    //printVector(newVect);
+    cout << "check State " << checkState(board);
 
 //////////////////////////////////////////
 
-   bool flag = true;
+  /*bool flag = true;
     char simbolPlayer = 'x';
     char simbolComp = 'o';
     while(true) {
         char answer;
 
 
-        /* if(flag == true) {
+        if(flag == true) {
             cout << "Choise simbol for playing - o / x: \n";
             cin >> simbolPlayer;
             if(simbolPlayer == 'o') {
@@ -252,7 +293,7 @@ int main() {
                 cout << "selected sombol incorrect, please try again\n";
                 continue;
             }
-        } */
+        } 
         int indexPlayer = 0;
         printBoard(board);
         cout << "Choise number empty cell: \n";
@@ -261,6 +302,7 @@ int main() {
             cout << "Cell not empty, try again choise\n";
             continue;
         }
+        
 
         board[indexPlayer] = simbolPlayer;
         if(!isNotEnd(board)){
@@ -325,8 +367,8 @@ int main() {
     }
 
 
+*/
 
-
-
+ 
     return 0;
 }
