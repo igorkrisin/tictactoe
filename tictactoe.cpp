@@ -10,6 +10,10 @@ enum state { Xwin, Owin, notEnd, Tie};
 int evaluatMove(array <char,9> &board, char whoMove, int depth);
 void printAllBoard(vector <array<char, 9>> allBoard);
 
+
+
+
+
 bool isNotEnd(array<char,9> board) {
     for(int i = 0; i < 9; i++) {
         if(board.at(i) == ' ') {
@@ -91,6 +95,18 @@ void printBoard(array<char,9> board) {
     }
 
 }
+
+void printEmptyBoard(array<char,9> board) {
+    cout << '-' << '-' << '-'<< '-' << '-' << '-' << '-'<< '\n';
+    for(int x = 0; x < 3; x++) {
+
+        cout << '|' << 0+x*3 << board.at(0+x*3) << '|' <<  1+x*3 <<  board.at(1+x*3) << '|' << board.at(2+x*3) << '|'  << 2+x*3<<'\n';
+        cout << '-' << '-' << '-'<< '-' << '-' << '-' << '-';
+        cout << '\n';
+    }
+
+}
+
 
 
 array<char,9> clearBoard(array<char,9> &board) {
@@ -258,21 +274,54 @@ int evaluatMove(array <char,9> &board, char whoMove, int Depth) {
     return (whoMove =='o' ? minScore : bestScore)(allEvaluat);
 }
 
+bool isInt(int num) {
+    int arr[9];
+    for (int i = 1; i < 10; i++)
+    {
+        arr[i] = i;
+    }
+    for (int i = 0; i < 9; i++)
+    {
+        if(arr[i] == num) {
+            return true;
+        }
+    }
+    return false;
+    
+}
 
 
+int inputInt(int m = INT_MIN, int M = INT_MAX)
+{
+    int N;
+    for (;;) {
+        cout <<  " enter nuber cell " << m << " to " << M << "): " << flush;
+        if ((cin >> N).good() && (m <= N) && (N <= M)) return N;
+        if (cin.fail()) {
+            cin.clear();
+            cout << "incorrect enter, please try agayn.\n";
+        } else {
+            cout << "number of range, please try agayn.\n";
+        }
+        cin.ignore(numeric_limits<std::streamsize>::max(),'\n');
+    }
+}
 
 int main() {
 
     array<char,9> board = {' ', ' ', ' ',
                            ' ', ' ', ' ',
                            ' ', ' ', ' '};
+    array<char,9> emptyBoard = {'1', '2', '3',
+                                '4', '5', '6',
+                                '7', '8', '9'};
      
     
     
 
-   bool flag = true;
+    bool flag = true;
     char simbol = 'x';
-    
+    int indexPlayer = 1;
     while(true) {
         char answer;
 
@@ -293,17 +342,23 @@ int main() {
                 continue;
             }
         }   */
-        int indexPlayer = 0;
+        printBoard(emptyBoard);
+        
         printBoard(board);
-        cout << "Choise number empty cell: \n";
-        cin >> indexPlayer;
-        if(board[indexPlayer] != ' '){
-            cout << "Cell not empty, try again choise\n";
+        
+        //cout << "Choise number empty cell: \n";
+        //cin >> indexPlayer;
+
+        indexPlayer = inputInt(1,9);
+       
+        if (board[indexPlayer - 1] != ' '){
+             cout << "Cell not empty, try again choise\n";
             continue;
         }
         
-
-        board[indexPlayer] = simbol;
+ 
+       
+        board.at(indexPlayer - 1) = simbol;
         if(checkState(board) == Xwin) {
             cout << "X win\n";
                 printBoard(board);
@@ -366,8 +421,8 @@ int main() {
                 }
             }
             else if(checkState(board) == Tie) {
-                cout << "Tie\n";
                 printBoard(board);
+                cout << "Tie\n";
                 cout << "try again? press y or n\n";
                 cin >> answer;
                 if(answer == 'y') {
@@ -382,9 +437,5 @@ int main() {
 
     }
 
-
-
- 
- 
     return 0;
 }
