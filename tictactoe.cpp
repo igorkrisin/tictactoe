@@ -2,6 +2,7 @@
 #include <array>
 #include <ctime>
 #include <vector>
+#include <ctime>
 using namespace std;
 
 enum state { Xwin, Owin, notEnd, Tie};
@@ -9,6 +10,8 @@ enum state { Xwin, Owin, notEnd, Tie};
 
 int evaluatMove(array <char,9> &board, char whoMove, int depth);
 void printAllBoard(vector <array<char, 9>> allBoard);
+vector<array<char,9>> swap(vector<array<char,9>> board);
+void shuffle(vector<array<char,9>> boards, int N);
 
 
 
@@ -264,6 +267,7 @@ int evaluatMove(array <char,9> &board, char whoMove, int Depth) {
 	    return 0;
     }
     vector<array<char,9>> allBoards = allBoard(board, who_move(whoMove));
+    shuffle(allBoards, allBoards.size());
     vector<int> allEvaluat;
     for(int i = 0; i < allBoards.size();i++) {
 	    allEvaluat.push_back(evaluatMove(allBoards.at(i), who_move(whoMove), Depth+1));
@@ -299,12 +303,26 @@ int inputInt(int m = INT_MIN, int M = INT_MAX)
         if ((cin >> N).good() && (m <= N) && (N <= M)) return N;
         if (cin.fail()) {
             cin.clear();
-            cout << "incorrect enter, please try agayn.\n";
+            cout << "incorrect enter, please try again.\n";
         } else {
-            cout << "number of range, please try agayn.\n";
+            cout << "number of range, please try again.\n";
         }
         cin.ignore(numeric_limits<std::streamsize>::max(),'\n');
     }
+}
+
+ void shuffle(vector<array<char,9>> boards, int N) {
+    srand(time(NULL));
+
+    for (int i = N - 1; i >=1; i--)
+    {
+        int j = rand() % (i + 1);
+
+        array<char,9> boardsNew = boards.at(j);
+        boards.at(j) = boards.at(i);
+        boards.at(i) = boardsNew;
+    }
+    //return boards;
 }
 
 int main() {
