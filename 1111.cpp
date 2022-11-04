@@ -1,45 +1,21 @@
 #include <iostream>
-#include<ctime>
 using namespace std;
+
+void* operator new(size_t size) {
+    cout << "Allocating " << size << " bytes\n";
+    return malloc(size);
+
+
+}
+
+class Object {
+     int x, y ,z;
+};
 
 int main()
 {
-srand(time(NULL));
+    string string = "Cherno";
+    Object* obj = new Object;
 
-const int SIZE = 10;
-int arr[SIZE];
-
-bool alreadyThere;
-
-for (int i = 0; i < SIZE; )
-{
-alreadyThere = false;
-int newRanomValue = rand() % 20;
-
-for (int j = 0; j < i; j++)
-{
-    if (arr[j]==newRanomValue)
-    {
-        alreadyThere = true;
-        break;
-    }
+ return 0;
 }
-
-if (!alreadyThere)
-{
-arr[i] = newRanomValue;
-i++;
-}
-
-}
-
-for (int i = 0; i < SIZE; i++)
-{
-cout<< arr[i] <<endl;
-}
-
-}
-
-}
-
-
