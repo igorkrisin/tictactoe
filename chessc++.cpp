@@ -11,7 +11,7 @@ using namespace std;
 
 
 enum  pieces {king, queen, bishop, knight, rook, pawn, Empty};
-enum color {white, black};
+enum color {black,white};
 
 template <typename T>
 
@@ -30,23 +30,35 @@ public:
     Matrix(int width, int hight) {
         matrWidth = width;
         matrHight = hight;
-        cout << "calling constructor" << endl;
-        //matr = new T [hight*width]; TODO попробовать разобраться с нью в такой записи и разобраться с Malloc стек с повторным освобождением памяти
+        cout << "calling constructor" << this << endl;
+        matr = new T [hight*width]; //TODO попробовать разобраться с нью в такой записи и разобраться с Malloc стек с повторным освобождением памяти
         
-        matr = (T*)malloc(sizeof(T)*hight*width);
+        //matr = (T*)malloc(sizeof(T)*hight*width);
     }
+
+    /* Matrix(const Matrix &other){
+        this->matrWidth = other.matrWidth;
+        this->matrHight = other.matrHight;
+        this->matr = new T[matrHight*matrWidth];
+        for (int i = 0; i < matrHight*matrWidth; i++)
+        {
+           this->matr[i] = other.matr[i];
+           cout << "calling constructor" << this << endl;
+        }
+        
+    } */
     // WSL
     // Amazon AWS - cloud9
     
 
     ~Matrix(){
-        cout << "calling destructor" << endl;
-        //delete matr;
+        cout << "calling destructor" << this << endl;
+        delete matr;
         //free(matr);
     } 
     
     T& at(int x, int y) {
-        if(x > matrWidth || y > matrHight){
+        if(x < 0 || x  > matrWidth || y > matrHight || y < 0){
             string mssg = "width= "+to_string(matrWidth)+" hight= "+to_string(matrHight) +" ,but "+" x="+to_string(x)+" y="+to_string(y);
             throw out_of_range(mssg);
         }
@@ -98,49 +110,53 @@ public:
     }
     
     Pieces (pieces name_piece) {
-	this->name_piece = name_piece;
+	    this->name_piece = name_piece;
     }
+
+    /* Pieces & operator[](int index) {
+        return
+    } */
 
     
 
     void print(){
-        if(name_piece == 0 && color_piece == 1) {
+        if(name_piece == king && color_piece == white) {
             printf("[\u2654]");
         }
-        else if(name_piece == 1 && color_piece == 1) {
+        else if(name_piece == queen && color_piece == white) {
             printf("[\u2655]");
         }
-        else if(name_piece == 2 && color_piece == 1) {
+        else if(name_piece == bishop && color_piece == white) {
             printf("[\u2657]");
         }
-        else if(name_piece == 3 && color_piece == 1) {
+        else if(name_piece == knight && color_piece == white) {
             printf("[\u2658]");
         }
-        else if(name_piece == 4 && color_piece == 1) {
+        else if(name_piece == rook && color_piece == white) {
             printf("[\u2656]");
         }
-        else if(name_piece == 5 && color_piece == 1) {
+        else if(name_piece == pawn && color_piece == white) {
             printf("[\u2659]");
         }
         else if(name_piece == 6) {
             printf("[ ]");
         }
-        else if(name_piece == 0 && color_piece == 0) {
+        else if(name_piece == king && color_piece == black) {
            printf("[\u265A]");
         }
-        else if(name_piece == 1 && color_piece == 0) {
+        else if(name_piece == queen && color_piece == black) {
             printf("[\u265B]");
         }
-        else if(name_piece == 2 && color_piece == 0) {
+        else if(name_piece == bishop && color_piece == black) {
             printf("[\u265D]");
         }
-        else if(name_piece == 3 && color_piece == 0) {
+        else if(name_piece == knight && color_piece == black) {
             printf("[\u265E]");
         }
-        else if(name_piece == 4 && color_piece == 0) {
+        else if(name_piece == rook && color_piece == black) {
             printf("[\u265C]");
         }
-        else if(name_piece == 5 && color_piece == 0) {
+        else if(name_piece == pawn && color_piece == black) {
             printf("[\u265F]");
         }
     }
@@ -148,7 +164,7 @@ public:
     
 };
 
-void printBoard(Matrix<Pieces> board) {
+void printBoard(Matrix<Pieces> &board) {
         for (int y = 0; y < board.matrHight ;y++) {
     	    for(int x = 0; x < board.matrWidth; x++) {
         	board.at(x, y).print();
@@ -177,88 +193,115 @@ Pieces returnPiecesEmpty(pieces names) {
     return os;
 } 
 
-bool checkToRookOrQueen(int x, int y, Matrix<Pieces> board){
-    for(int X = 0; X < 8; X++) {
+bool checkOutOfRange(int x, int y, Matrix<Pieces> &board) {
+    if(x > board.matrWidth-1 || x < 0 || y > board.matrHight-1 || y < 0) {
+        return true;
+    }
+    return false;
+}
+
+bool checkToRookOrQueen(int x, int y, Matrix<Pieces> &board){
+    for(int X = x; X < 8; X++) {
         if(board.at(X, y).name_piece != Empty){
-            if(board.at(X, y).name_piece != rook || board.at(X, y).name_piece != queen) {
-                return false;
-            }
-            else if(board.at(X, y).name_piece == rook || board.at(X, y).name_piece == queen && board.at(x, y).color_piece != board.at(X, y).color_piece) {
-                return true;	
-                } 
+            if(board.at(X, y).name_piece == rook || board.at(X, y).name_piece == queen) {
+                if(board.at(x, y).color_piece != board.at(X, y).color_piece) {
+                    return true;	
+                }
             } 
+            else {
+                break;;
+            }
+            
+        } 
     }
-    for(int X = 7; X >= 0; X--) {
+    for(int X = x; X >= 0; X--) {
         if(board.at(X, y).name_piece != Empty){
-            if(board.at(X, y).name_piece != rook || board.at(X, y).name_piece != queen) {
-                return false;
-            }
-            else if(board.at(X, y).name_piece == rook || board.at(X, y).name_piece == queen && board.at(x, y).color_piece != board.at(X, y).color_piece) {
-                return true;	
-                } 
+            if(board.at(X, y).name_piece == rook || board.at(X, y).name_piece == queen) {
+                if(board.at(x, y).color_piece != board.at(X, y).color_piece) {
+                    return true;
+                }	
             } 
+            else {
+                break;
+            }
+        } 
     }
-    for(int Y = 0; Y < 8; Y++) {
+    for(int Y = y; Y < 8; Y++) {
         if(board.at(x, Y).name_piece != Empty){
-            if(board.at(x, Y).name_piece != rook || board.at(x, Y).name_piece != queen) {
-                return false;
+            if(board.at(x, Y).name_piece == rook || board.at(x, Y).name_piece == queen) {
+                if(board.at(x, y).color_piece != board.at(x, Y).color_piece) {
+                    return true;
+                }	
             }
-            else if(board.at(x, Y).name_piece == rook || board.at(x, Y).name_piece == queen && board.at(x, y).color_piece != board.at(x, Y).color_piece) {
-                return true;	
-                } 
-            } 
+            else {
+                break;
+            }
+             
+        } 
     }
-    for(int Y = 7; Y >=0 ; Y--) {
+    for(int Y = y-1; Y >=0 ; Y--) {
         if(board.at(x, Y).name_piece != Empty){
-            if(board.at(x, Y).name_piece != rook || board.at(x, Y).name_piece != queen) {
-                return false;
+            if(board.at(x, Y).name_piece == rook || board.at(x, Y).name_piece == queen) {
+                if(board.at(x, y).color_piece != board.at(x, Y).color_piece) {
+                    return true;	
+                }
             }
-            else if(board.at(x, Y).name_piece == rook || board.at(x, Y).name_piece == queen && board.at(x, y).color_piece != board.at(x, Y).color_piece) {
-                return true;	
-                } 
-            } 
+            else {
+                break;
+            }
+        } 
     }  
     return false; 
 }
 
-bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> board) {
-    for(int X, Y = 0; X < 8 && Y < 8; X++, Y++) {
+bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> &board) {
+    for(int X = x, Y = y; X < 8 && Y < 8; X++, Y++) {
 	    if(board.at(X, Y).name_piece != Empty){
-            if(board.at(X, Y).name_piece != bishop || board.at(X, Y).name_piece != queen) {
-                return false;
-            }
-            else if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen && board.at(x, y).color_piece != board.at(X, Y).color_piece) {
-                return true;	
+            if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen ) {
+                if(board.at(x, y).color_piece != board.at(X, Y).color_piece) {
+                    return true;	
+                }
             } 
+            else {
+                break;
+            }
         }  
     } 
-    for(int X = 7, Y = 0; X >= 0 && Y < 8; X--, Y++) {
+    for(int X = x, Y = y; X >= 0 && Y < 8; X--, Y++) {
 	    if(board.at(X, Y).name_piece != Empty){
-            if(board.at(X, Y).name_piece != bishop || board.at(X, Y).name_piece != queen) {
-                return false;
-            }
-            else if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen && board.at(x, y).color_piece != board.at(X, Y).color_piece) {
-                return true;	
+            if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen) {
+                if(board.at(x, y).color_piece != board.at(X, Y).color_piece) {
+                    return true;
+                }
             } 
+            else {
+                break;
+            }
+            
         }  
     } 
-    for(int X = 0, Y = 7; X < 8 && Y >= 0; X++, Y--) {
+    for(int X = x, Y = y; X < 8 && Y >= 0; X++, Y--) {
 	    if(board.at(X, Y).name_piece != Empty){
-            if(board.at(X, Y).name_piece != bishop || board.at(X, Y).name_piece != queen) {
-                return false;
+            if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen) {
+                if(board.at(x, y).color_piece != board.at(X, Y).color_piece) {
+                    return true;
+                }
             }
-            else if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen && board.at(x, y).color_piece != board.at(X, Y).color_piece) {
-                return true;	
-            } 
+            else {
+                break;
+            }
+             
         }  
     } 
-    for(int X = 7, Y = 7; X >= 0 && Y >= 0; X--, Y--) {
+    for(int X = x, Y = y; X >= 0 && Y >= 0; X--, Y--) {
 	    if(board.at(X, Y).name_piece != Empty){
-            if(board.at(X, Y).name_piece != bishop || board.at(X, Y).name_piece != queen) {
-                return false;
+            if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen) {
+                if(board.at(x, y).color_piece != board.at(X, Y).color_piece) {
+                    return true;
+                }
             }
-            else if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen && board.at(x, y).color_piece != board.at(X, Y).color_piece) {
-                return true;	
+            else {
+                break;
             } 
         }  
     } 
@@ -266,13 +309,17 @@ bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> board) {
 }
 
 
-bool checkToKing(int x, int y, Matrix<Pieces> board) {
+bool checkToKing(int x, int y, Matrix<Pieces> &board) {
     
     int arrY[] = {y+1, y+1, y+1, y, y-1, y-1, y-1, y};
     int arrX[] = {x+1, x, x-1, x-1, x-1, x, x+1, x+1};
     for(int i = 0; i < 8; i++) {
-        if(board.at(arrY[i], arrX[i]).name_piece != Empty) {
-            if(board.at(arrY[i], arrX[i]).name_piece != king){
+        if(checkOutOfRange(arrX[i], arrY[i], board)){
+            continue;
+        }
+       
+        if(board.at(arrX[i], arrY[i]).name_piece != Empty) {
+            if(board.at(arrX[i], arrY[i]).name_piece != king){
                 continue;
             }
             else {
@@ -284,18 +331,21 @@ bool checkToKing(int x, int y, Matrix<Pieces> board) {
     return false;
 }
 
-bool checkToPawn(int x, int y, Matrix<Pieces> board) {
+bool checkToPawn(int x, int y, Matrix<Pieces> &board) {
     int arrY[] = {y + 1, y + 1, y - 1, y - 1};
 	int arrX[] = {x + 1, x - 1, x + 1, x - 1};
     for (int i = 0; i < 4; i++) {
-        if(board.at(arrY[i], arrX[i]).name_piece != Empty) {
-            if(board.at(arrY[i], arrX[i]).name_piece != pawn) {
+        if(checkOutOfRange(arrX[i], arrY[i], board)){
+            continue;
+        }
+        if(board.at(arrX[i], arrY[i]).name_piece != Empty) {
+            if(board.at(arrX[i], arrY[i]).name_piece != pawn) {
                 continue;
             }
-            if(board.at(arrY[i], arrX[i]).name_piece == pawn && board.at(x, y).color_piece == board.at(arrY[i], arrX[i]).color_piece) {
+            if(board.at(arrX[i], arrY[i]).name_piece == pawn && board.at(x, y).color_piece == board.at(arrX[i], arrY[i]).color_piece) {
                 continue;
             }
-            else if(board.at(arrY[i], arrX[i]).name_piece == pawn && board.at(x, y).color_piece != board.at(arrY[i], arrX[i]).color_piece) {
+            else if(board.at(arrX[i], arrY[i]).name_piece == pawn && board.at(x, y).color_piece != board.at(arrX[i], arrY[i]).color_piece) {
                 return true;
             }
         }
@@ -304,19 +354,22 @@ bool checkToPawn(int x, int y, Matrix<Pieces> board) {
     return false;
 }
 
-bool checkToKnight(int x, int y, Matrix<Pieces> board) {
+bool checkToKnight(int x, int y, Matrix<Pieces> &board) {
     int arrY[] = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
 	int arrX[] = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
     for (int i = 0; i < 8; i++)
     {
-        if(board.at(arrY[i], arrX[i]).name_piece != Empty) {
-            if(board.at(arrY[i], arrX[i]).name_piece != knight) {
+        if(checkOutOfRange(arrX[i], arrY[i], board)){
+            continue;
+        }
+        if(board.at(arrX[i], arrY[i]).name_piece != Empty) {
+            if(board.at(arrX[i], arrY[i]).name_piece != knight) {
                 continue;
             }
-            if(board.at(arrY[i], arrX[i]).name_piece == knight && board.at(x, y).color_piece == board.at(arrY[i], arrX[i]).color_piece) {
+            if(board.at(arrX[i], arrY[i]).name_piece == knight && board.at(x, y).color_piece == board.at(arrX[i], arrY[i]).color_piece) {
                 continue;
             }
-            else if(board.at(arrY[i], arrX[i]).name_piece == knight && board.at(x, y).color_piece != board.at(arrY[i], arrX[i]).color_piece) {
+            else if(board.at(arrX[i], arrY[i]).name_piece == knight && board.at(x, y).color_piece != board.at(arrX[i], arrY[i]).color_piece) {
                 return true;
             }
         }
@@ -326,9 +379,9 @@ bool checkToKnight(int x, int y, Matrix<Pieces> board) {
 }
 
 
-bool check(int x, int y, Matrix<Pieces> board) {
+bool checkCheck(int x, int y, Matrix<Pieces> &board) {
 
-    return (checkToRookOrQueen(x, y, board) || checkToBishopOrQueen(x, y, board) || checkToKing(x, y, board) || checkToPawn(x, y, board) || checkToKing(x, y, board));
+    return (checkToRookOrQueen(x, y, board) || checkToBishopOrQueen(x, y, board) || checkToKing(x, y, board) || checkToPawn(x, y, board) || checkToKnight(x, y, board));
     
 }
 
@@ -336,14 +389,14 @@ bool check(int x, int y, Matrix<Pieces> board) {
 int main (int argc, char* argv[]){
 
     Pieces board[64] = {
-    returnPieces(rook, black), returnPieces(bishop, black), returnPieces(knight, black), returnPieces(king, black), returnPieces(queen, black), returnPieces(knight, black), returnPieces(bishop, black), returnPieces (rook, black),
-    returnPieces(pawn, black), returnPieces(pawn, black), returnPieces(pawn, black) , returnPieces(pawn, black), returnPieces(pawn, black), returnPieces(pawn, black) , returnPieces (pawn, black), returnPieces(pawn, black),
+    returnPieces(rook, black), returnPieces(bishop, black), returnPieces(knight, black), returnPieces(queen, black), returnPieces(king, black), returnPieces(knight, black), returnPieces(bishop, black), returnPieces (rook, black),
+    returnPieces(pawn, black), returnPieces(pawn, black), returnPieces(pawn, black) , returnPieces(pawn, black), returnPieces(pawn, black), returnPieces(pawn, black), returnPieces (pawn, black), returnPieces(pawn, black),
     returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
     returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
     returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
     returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
-    returnPieces(pawn, white), returnPieces(pawn, white), returnPieces(pawn, white) , returnPieces(pawn, white), returnPieces(pawn, white), returnPieces(pawn, white) , returnPieces (pawn, white), returnPieces(pawn, white),
-    returnPieces(rook, white), returnPieces(bishop, white), returnPieces(knight, white), returnPieces(king, white), returnPieces(queen, white), returnPieces(knight, white), returnPieces(bishop, white), returnPieces (rook, white),	
+    returnPieces(pawn, white), returnPieces(pawn, white), returnPieces(pawn, white) , returnPieces(pawn, white), returnPieces(pawn, white), returnPieces(pawn, white) , returnPieces(pawn, white), returnPieces(pawn, white),
+    returnPieces(rook, white), returnPieces(bishop, white), returnPieces(knight, white), returnPieces(queen, white), returnPieces(king, white), returnPieces(knight, white), returnPieces(bishop, white), returnPieces (rook, white),	
 };
 
     
@@ -361,7 +414,10 @@ int main (int argc, char* argv[]){
     //board[0].print();
     //Pieces king1(king, white);
     //king1.print();
+
     printBoard(chess);
+
+    cout << checkCheck(4,0,chess)<< endl;
      
      //chess.at(1,2)=42;
     
