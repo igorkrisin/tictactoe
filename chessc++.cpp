@@ -30,30 +30,30 @@ public:
     Matrix(int width, int hight) {
         matrWidth = width;
         matrHight = hight;
-        cout << "calling constructor" << this << endl;
+        //cout << "calling constructor" << this << endl;
         matr = new T [hight*width]; //TODO попробовать разобраться с нью в такой записи и разобраться с Malloc стек с повторным освобождением памяти
         
         //matr = (T*)malloc(sizeof(T)*hight*width);
     }
 
-    /* Matrix(const Matrix &other){
+    Matrix(const Matrix &other) {
         this->matrWidth = other.matrWidth;
         this->matrHight = other.matrHight;
         this->matr = new T[matrHight*matrWidth];
         for (int i = 0; i < matrHight*matrWidth; i++)
         {
            this->matr[i] = other.matr[i];
-           cout << "calling constructor" << this << endl;
+           //cout << "calling constructor" << this << endl;
         }
         
-    } */
+    } 
     // WSL
     // Amazon AWS - cloud9
     
 
     ~Matrix(){
-        cout << "calling destructor" << this << endl;
-        delete matr;
+        //cout << "calling destructor" << this << endl;
+        delete [] matr;
         //free(matr);
     } 
     
@@ -94,7 +94,7 @@ public:
 class Pieces {
     
 public:
-    //vector<Pieces> m; 
+ 
     pieces name_piece;
     color color_piece;
     void SetName(pieces name_piece, color color_piece) {
@@ -103,6 +103,9 @@ public:
     }
 
     
+    Pieces(){
+
+    }
 
     Pieces (pieces name_piece, color color_piece) {
 	    this->name_piece = name_piece;
@@ -112,13 +115,7 @@ public:
     Pieces (pieces name_piece) {
 	    this->name_piece = name_piece;
     }
-
-    /* Pieces & operator[](int index) {
-        return
-    } */
-
     
-
     void print(){
         if(name_piece == king && color_piece == white) {
             printf("[\u2654]");
@@ -160,11 +157,37 @@ public:
             printf("[\u265F]");
         }
     }
-
     
+    bool operator== (const Pieces &other) {
+	return this->name_piece == other.name_piece && this->color_piece == other.color_piece;
+    }    
 };
 
-void printBoard(Matrix<Pieces> &board) {
+class Move {
+public:
+
+    int xDeParture;
+    int yDeParture;
+    int xArrivle;
+    int yArrivle;
+    
+    Move(int xDeParture, int yDeParture, int xArrivle, int yArrivle) {
+        this->xDeParture = xDeParture;
+	this->yDeParture = yDeParture;
+	this->xArrivle = xArrivle;
+	this->yArrivle = yArrivle;
+    }
+    
+
+};
+
+vector<Move> listMovesKing(int x, int y, Matrix<Pieces> board) {
+    vector<Move>
+}
+
+//TODO написать функцию печати vector<Move>
+
+void printBoard(Matrix<Pieces> board) {
         for (int y = 0; y < board.matrHight ;y++) {
     	    for(int x = 0; x < board.matrWidth; x++) {
         	board.at(x, y).print();
@@ -193,14 +216,14 @@ Pieces returnPiecesEmpty(pieces names) {
     return os;
 } 
 
-bool checkOutOfRange(int x, int y, Matrix<Pieces> &board) {
+bool checkOutOfRange(int x, int y, Matrix<Pieces> board) {
     if(x > board.matrWidth-1 || x < 0 || y > board.matrHight-1 || y < 0) {
         return true;
     }
     return false;
 }
 
-bool checkToRookOrQueen(int x, int y, Matrix<Pieces> &board){
+bool checkToRookOrQueen(int x, int y, Matrix<Pieces> board){//TODO оптимизировать функцию
     for(int X = x; X < 8; X++) {
         if(board.at(X, y).name_piece != Empty){
             if(board.at(X, y).name_piece == rook || board.at(X, y).name_piece == queen) {
@@ -254,8 +277,8 @@ bool checkToRookOrQueen(int x, int y, Matrix<Pieces> &board){
     return false; 
 }
 
-bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> &board) {
-    for(int X = x, Y = y; X < 8 && Y < 8; X++, Y++) {
+bool checkToBishopOrQueenUnif(int x, int y, Matrix<Pieces> board, int dirX, int dirY ) {
+    for(int X = x, Y = y;checkOutOfRange(X,Y, board); X = X+dirX, Y = Y+dirY) {
 	    if(board.at(X, Y).name_piece != Empty){
             if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen ) {
                 if(board.at(x, y).color_piece != board.at(X, Y).color_piece) {
@@ -263,53 +286,24 @@ bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> &board) {
                 }
             } 
             else {
-                break;
+                return false;
             }
         }  
-    } 
-    for(int X = x, Y = y; X >= 0 && Y < 8; X--, Y++) {
-	    if(board.at(X, Y).name_piece != Empty){
-            if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen) {
-                if(board.at(x, y).color_piece != board.at(X, Y).color_piece) {
-                    return true;
-                }
-            } 
-            else {
-                break;
-            }
-            
-        }  
-    } 
-    for(int X = x, Y = y; X < 8 && Y >= 0; X++, Y--) {
-	    if(board.at(X, Y).name_piece != Empty){
-            if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen) {
-                if(board.at(x, y).color_piece != board.at(X, Y).color_piece) {
-                    return true;
-                }
-            }
-            else {
-                break;
-            }
-             
-        }  
-    } 
-    for(int X = x, Y = y; X >= 0 && Y >= 0; X--, Y--) {
-	    if(board.at(X, Y).name_piece != Empty){
-            if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen) {
-                if(board.at(x, y).color_piece != board.at(X, Y).color_piece) {
-                    return true;
-                }
-            }
-            else {
-                break;
-            } 
-        }  
-    } 
-    return false;
+    }
+    throw runtime_error("error in function checkToBishopOrQueenUnif");
 }
 
+bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> board) {
+    return
+    checkToBishopOrQueenUnif(x, y, board, 1, 1) || 
+    checkToBishopOrQueenUnif(x, y, board, -1, 1) ||
+    checkToBishopOrQueenUnif(x, y, board, -1, -1)||
+    checkToBishopOrQueenUnif(x, y, board, 1, -1);
+    
 
-bool checkToKing(int x, int y, Matrix<Pieces> &board) {
+}
+
+bool checkToKing(int x, int y, Matrix<Pieces> board) {
     
     int arrY[] = {y+1, y+1, y+1, y, y-1, y-1, y-1, y};
     int arrX[] = {x+1, x, x-1, x-1, x-1, x, x+1, x+1};
@@ -331,7 +325,7 @@ bool checkToKing(int x, int y, Matrix<Pieces> &board) {
     return false;
 }
 
-bool checkToPawn(int x, int y, Matrix<Pieces> &board) {
+bool checkToPawn(int x, int y, Matrix<Pieces> board) {
     int arrY[] = {y + 1, y + 1, y - 1, y - 1};
 	int arrX[] = {x + 1, x - 1, x + 1, x - 1};
     for (int i = 0; i < 4; i++) {
@@ -354,7 +348,7 @@ bool checkToPawn(int x, int y, Matrix<Pieces> &board) {
     return false;
 }
 
-bool checkToKnight(int x, int y, Matrix<Pieces> &board) {
+bool checkToKnight(int x, int y, Matrix<Pieces> board) {
     int arrY[] = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
 	int arrX[] = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
     for (int i = 0; i < 8; i++)
@@ -379,7 +373,7 @@ bool checkToKnight(int x, int y, Matrix<Pieces> &board) {
 }
 
 
-bool checkCheck(int x, int y, Matrix<Pieces> &board) {
+bool checkCheck(int x, int y, Matrix<Pieces> board) {
 
     return (checkToRookOrQueen(x, y, board) || checkToBishopOrQueen(x, y, board) || checkToKing(x, y, board) || checkToPawn(x, y, board) || checkToKnight(x, y, board));
     
@@ -402,6 +396,10 @@ int main (int argc, char* argv[]){
     
     Matrix<Pieces>  chess(8,8);
     
+    Pieces P1;
+    Pieces P2;
+    cout <<"P1 == P2 " << (P1==P2) << endl; //TODO разобраться с данным предупреждением ISO C++20 considers use of overloaded operator '==' (with operand types 'Pieces' and 'Pieces') to be ambiguous despite there being a unique best viable function
+    
     //Matrix<int> chess(3,3);
     
     //Pieces* x=new Pieces[42];
@@ -417,7 +415,7 @@ int main (int argc, char* argv[]){
 
     printBoard(chess);
 
-    cout << checkCheck(4,0,chess)<< endl;
+    //cout << checkCheck(4,0,chess)<< endl;
      
      //chess.at(1,2)=42;
     
