@@ -214,9 +214,11 @@ void printVector(vector<Move> arr) {
     cout << "]" << endl;
 
 }
+
 void addMovesInList(int x, int y, int xDir, int yDir, Move &move, vector<Move> &listMove ,  Matrix<Pieces> &board) {
-        if (!checkOutOfRange(xDir, yDir, board) && board.at(x, y).color_piece != board.at(xDir,yDir).color_piece ||
-            !checkOutOfRange(xDir, yDir, board) && board.at(xDir,yDir).name_piece == Empty) {
+
+        if ((!checkOutOfRange(xDir, yDir, board) && board.at(x, y).color_piece != board.at(xDir,yDir).color_piece)||
+            (!checkOutOfRange(xDir, yDir, board) && board.at(xDir,yDir).name_piece == Empty)) {
             move.xDeParture = x;
             move.yDeParture = y;
             move.xArrivle = xDir;
@@ -233,16 +235,21 @@ void addMoves(int &x, int &y, int xDir, int yDir, vector<Move> &listMove) {
     move.yArrivle = yDir;
     listMove.push_back(move);
 }
+bool flag = false;
+bool checkAddMove(int x ,int y,int Xorig, int Yorig, Matrix<Pieces> &board) {
 
-bool checkAddMove(int x ,int y,int xDir, int yDir, Matrix<Pieces> &board) {
-
-    if((!checkOutOfRange(x+xDir, y+yDir, board) && board.at(x, y).color_piece != board.at(x+xDir,y+yDir).color_piece )||
-    (!checkOutOfRange(x+xDir, y+yDir, board) && board.at(x+xDir,y+yDir).name_piece == Empty)){
+    if(!checkOutOfRange(x, y, board) && board.at(x,y).name_piece == Empty) {
         return true;
     }
-    else{
-        return false;
+    else if((!checkOutOfRange(x, y, board) && board.at(x, y).color_piece == board.at(Xorig,Yorig).color_piece)) {
+          return false;
     }
+    else if((!checkOutOfRange(x, y, board) && board.at(x, y).color_piece != board.at(Xorig,Yorig).color_piece && !flag)) {
+        flag = true;
+        return true;
+
+    }
+    return false;
 }
 
 vector<Move> listMovesKing(int x, int y, Matrix<Pieces> &board) {
@@ -266,7 +273,7 @@ vector<Move> listMovesKnight(int x, int y, Matrix<Pieces> &board) {
     int arrY[] = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
     int arrX[] = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
 
-        for (int i = 0; i < sizeof(arrX)/sizeof(arrX[0]); i++) {
+        for (int i = 0; i < (int)(sizeof(arrX)/sizeof(arrX[0])); i++) {
             addMovesInList(x, y, arrX[i], arrY[i], doMove, listMove, board);
         }
 
@@ -276,30 +283,41 @@ vector<Move> listMovesKnight(int x, int y, Matrix<Pieces> &board) {
 vector<Move> moveSide(int x, int y, Matrix<Pieces> &board, int dirX, int dirY, vector<Move> &listMoves) {
 
     for (int X = x+dirX, Y = y+dirY; !checkOutOfRange(X, Y, board); X = X+dirX, Y = Y+dirY) {
-       if(checkAddMove(x,y,dirX,dirY, board)) {
+       if(checkAddMove(X,Y,x,y, board)) {
             addMoves(x,y,X, Y, listMoves);
         }
+       else {
 
-        else {
-            break;
-        }
-
-
+           break;
+       }
     }
     return listMoves;
 }
 
-vector<Move> listMovesRook(int x, int y, Matrix<Pieces> &board) {
+vector<Move> listMovesRookQueen(int x, int y, Matrix<Pieces> &board) {
     vector<Move> listMoves;
     vector<Move> rightMove = moveSide(x,y,board,1,0,listMoves);
+    flag = false;
     vector<Move> leftMove = moveSide(x,y,board,-1,0, listMoves);
+    flag = false;
     vector<Move> upMove = moveSide(x,y,board,0,-1, listMoves);
+    flag = false;
     vector<Move> downMove = moveSide(x,y,board,0,1, listMoves);
-    /*listMoves.insert(listMoves.end(), rightMove.begin(), rightMove.end());
-    listMoves.insert(listMoves.end(), leftMove.begin(), leftMove.end());
-    listMoves.insert(listMoves.end(), upMove.begin(), upMove.end());
-    listMoves.insert(listMoves.end(), downMove.begin(), downMove.end());*/
+    flag = false;
 
+    return listMoves;
+}
+
+vector<Move> listMovesBeeshopQueen(int x, int y, Matrix<Pieces> &board) {
+    vector<Move> listMoves;
+    vector<Move> rightMove = moveSide(x,y,board,1,1,listMoves);
+    flag = false;
+    vector<Move> leftMove = moveSide(x,y,board,-1,1, listMoves);
+    flag = false;
+    vector<Move> upMove = moveSide(x,y,board, 1, -1, listMoves);
+    flag = false;
+    vector<Move> downMove = moveSide(x,y,board,-1, -1, listMoves);
+    flag = false;
 
     return listMoves;
 }
@@ -474,7 +492,7 @@ int main (int argc, char* argv[]){
     returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
     returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
     returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
-    returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
+    returnPiecesEmpty(Empty), returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPieces(rook, black),returnPiecesEmpty(Empty), returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),returnPiecesEmpty(Empty),
     returnPieces(pawn, white), returnPieces(pawn, white), returnPieces(pawn, white) , returnPieces(pawn, white), returnPieces(pawn, white), returnPieces(pawn, white) , returnPieces(pawn, white), returnPieces(pawn, white),
     returnPieces(rook, white), returnPieces(bishop, white), returnPieces(knight, white), returnPieces(queen, white), returnPieces(king, white), returnPieces(knight, white), returnPieces(bishop, white), returnPieces (rook, white),
 };
@@ -505,7 +523,7 @@ int main (int argc, char* argv[]){
     //cout << checkCheck(4,0,chess)<< endl;
     Move m;
 
-    printVector(listMovesRook(3,5,chess));
+    printVector(listMovesBeeshopQueen(3,5,chess));
 
 
     //m.Print(m.xArrivle);
