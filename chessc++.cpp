@@ -74,7 +74,7 @@ public:
 
     }
     void printBoard() {
-        for (int i = 0; i < matrWidth+matrHight; i++)
+        for (int i = 0; i < matrWidth*matrHight; i++)
         {
             matr[i].print();
             if((i+1)%8 == 0) {
@@ -158,6 +158,9 @@ public:
         else if(name_piece == pawn && color_piece == black) {
             printf("[\u265F]");
         }
+        else {
+            cout << "error in printBoard";
+        }
     }
 
     bool operator== (const Pieces &other) {
@@ -195,7 +198,7 @@ public:
 
 };
 
-void push_back_list(vector<Move> &listMove, vector<Move> &everyMoveList);//прототип!!!
+void push_back_list(vector<Move> listMove, vector<Move> &everyMoveList);//прототип!!!
 
 bool checkOutOfRange(int x, int y, Matrix<Pieces> board) {
     if(x > board.matrWidth-1 || x < 0 || y > board.matrHight-1 || y < 0) {
@@ -206,7 +209,7 @@ bool checkOutOfRange(int x, int y, Matrix<Pieces> board) {
 
 void printVector(vector<Move> arr) {
     cout << "list moves: [";
-    for (int i = 0; i < arr.size(); i++)
+    for (int i = 0; i < (int)arr.size(); i++)
     {
        cout << arr[i].xArrivle << ", " << arr[i].yArrivle << " ; ";
     }
@@ -240,11 +243,10 @@ bool checkAddMove(int x ,int y,int Xorig, int Yorig, Matrix<Pieces> &board) {
     if(!checkOutOfRange(x, y, board) && board.at(x,y).name_piece == Empty) {
         return true;
     }
-    else if((!checkOutOfRange(x, y, board) && board.at(x, y).color_piece == board.at(Xorig,Yorig).color_piece)) {
+    else if(!checkOutOfRange(x, y, board) && board.at(x, y).color_piece == board.at(Xorig,Yorig).color_piece) {
           return false;
     }
-    else if((!checkOutOfRange(x, y, board) && board.at(x, y).color_piece != board.at(Xorig,Yorig).color_piece)) {
-        
+    else if(!checkOutOfRange(x, y, board) && board.at(x, y).color_piece != board.at(Xorig,Yorig).color_piece) {
         return true;
 
     }
@@ -288,12 +290,15 @@ vector<Move> listMovesKnight(int x, int y, Matrix<Pieces> &board) {
 
     return listMove;
 }
-
+//
 vector<Move> moveSide(int x, int y, Matrix<Pieces> &board, int dirX, int dirY) {
     vector<Move> listMoves;
     for (int X = x+dirX, Y = y+dirY; !checkOutOfRange(X, Y, board); X = X+dirX, Y = Y+dirY) {
        if(checkAddMove(X,Y,x,y, board)) {
-    	    //cout << "AddMoves";
+            if(board.at(X,Y).color_piece != board.at(x,y).color_piece){
+                addMoves(x,y,X, Y, listMoves);
+                break;
+            }
             addMoves(x,y,X, Y, listMoves);
         }
        else {
@@ -306,7 +311,7 @@ vector<Move> moveSide(int x, int y, Matrix<Pieces> &board, int dirX, int dirY) {
 
 vector<Move> listMovesRook(int x, int y, Matrix<Pieces> &board) {
     vector<Move> listMoves;
-    
+
     push_back_list(moveSide(x,y,board,1,0), listMoves);
     push_back_list(moveSide(x,y,board,-1,0), listMoves);
     push_back_list(moveSide(x,y,board,0,-1), listMoves);
@@ -321,7 +326,7 @@ vector<Move> listMovesBishop(int x, int y, Matrix<Pieces> &board) {
     push_back_list(moveSide(x,y,board,-1,1), listMoves);
     push_back_list(moveSide(x,y,board,1,-1), listMoves);
     push_back_list(moveSide(x,y,board,-1,-1), listMoves);
-    
+
     return listMoves;
 }
 
@@ -392,34 +397,53 @@ vector<Move> listMovesPawn(int x, int y, Matrix<Pieces> &board) {
 }
 
 
-void push_back_list(vector<Move> &listMove, vector<Move> &everyMoveList) {
+void push_back_list(vector<Move> listMove, vector<Move> &everyMoveList) {
 
     for (int i = 0; i < (int)listMove.size(); ++i) {
         everyMoveList.push_back(listMove[i]);
     }
-    
+
 }
 
 /*
-In C++, a Copy Constructor may be called for the following cases: 
+In C++, a Copy Constructor may be called for the following cases:
 
-1) When an object of the class is returned by value. 
-2) When an object of the class is passed (to a function) by value as an argument. 
-3) When an object is constructed based on another object of the same class. 
-4) When the compiler generates a temporary object. 
+1) When an object of the class is returned by value.
+2) When an object of the class is passed (to a function) by value as an argument.
+3) When an object is constructed based on another object of the same class.
+4) When the compiler generates a temporary object.
 
 */
 
-void printMove(Matrix<Pieces> &board, vector<Move> &listMove) {
-    for(int i = 0; i < listMove.size(); i++) {
-	Matrix<Pieces> newBoard(board);
-	Move temp = listMove.at(i);
-	board.at(temp.yArrivle, temp.xArrivle) = board.at(temp.yDeParture, temp.xDeParture);
-	board.at(temp.yDeParture, temp.xDeParture) = Empty;
-	newBoard.printBoard();
+void printMove(Matrix<Pieces> &board, vector<Move> listMove) {
+    Matrix<Pieces> newBoard(board);
+    for(int i = 0; i < (int)listMove.size(); i++) {
+
+        Move temp = listMove.at(i);
+        newBoard.at(temp.xArrivle, temp.yArrivle) = newBoard.at(temp.xDeParture, temp.yDeParture);
+        //newBoard.at(temp.xDeParture, temp.yDeParture) = Empty;
+        cout << endl;
+
+        cout << endl;
     }
-    
+    newBoard.printBoard();
 }
+
+
+void printOneMove(Matrix<Pieces> &board, vector<Move> listMove) {
+
+    for(int i = 0; i < (int)listMove.size(); i++) {
+        Matrix<Pieces> newBoard(board);
+        Move temp = listMove.at(i);
+        newBoard.at(temp.xArrivle, temp.yArrivle) = newBoard.at(temp.xDeParture, temp.yDeParture);
+        newBoard.at(temp.xDeParture, temp.yDeParture) = Empty;
+        cout << endl;
+        newBoard.printBoard();
+        cout << endl;
+    }
+
+}
+
 
 vector<Move> listMovesQueen(int x, int y, Matrix<Pieces> &board) {
     vector<Move> listMoves;
@@ -478,7 +502,7 @@ vector<Move> everyMoveList(Matrix<Pieces> &board, color colors)  {
 void printBoard(Matrix<Pieces> board) {
         for (int y = 0; y < board.matrHight ;y++) {
             for(int x = 0; x < board.matrWidth; x++) {
-            board.at(x, y).print();
+                board.at(x, y).print();
 
             }
             cout << endl;
@@ -672,9 +696,9 @@ int main (int argc, char* argv[]){
 
     //cout << checkCheck(4,0,chess)<< endl;
     Move m;
-    printVector(everyMoveList(chess, white));
+    //printVector(everyMoveList(chess, white));
     //printVector(listMovesQueen(3,5,chess));
-
+    printOneMove(chess, everyMoveList(chess, white));
 
     //m.Print(m.xArrivle);
 
