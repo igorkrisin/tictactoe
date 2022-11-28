@@ -158,11 +158,13 @@ public:
             printf("[\u265F]");
         }
         else {
+            cout << "name_piece = " << name_piece << ",  color_piece = " << color_piece << endl;
             cout << "error in printBoard";
         }
     }
 
     bool operator== (const Pieces &other) const {
+        cout << "!!!overload == : " << (this->name_piece == other.name_piece && this->color_piece == other.color_piece) << endl;
         return this->name_piece == other.name_piece && this->color_piece == other.color_piece;
     }
 };
@@ -196,40 +198,64 @@ public:
 
 };
 
-//TODO поэксперементировать с time - скорость работы программы
 //////////////////////////////////////////////////////////////////////////////////////// class end///////////////////////////////////////////////////////
 
 void push_back_list(vector<Move> listMove, vector<Move> &everyMoveList);//прототип!!!//////////////////////////////////////////////////////////
 bool checkCheck(int x, int y, Matrix<Pieces> &board);
 bool checkForCheck(int x, int y, Matrix<Pieces> &board, color colors);
-void printOneMove(Matrix<Pieces> &board, vector<Move> listMove);
-void printMove(Matrix<Pieces> &board, vector<Move> listMove);
+void printOneMove(Matrix<Pieces> &board, vector<Move> &listMove);
+void printMove(Matrix<Pieces> &board, vector<Move> &listMove);
 vector<Move> everyMoveList(Matrix<Pieces> &board, color colors);
 color swapColor(color colors);
 void printVector(vector<Move> arr);
+Pieces P(pieces names, color colors);
+
+//TODO почитать про enpassant
 
 Matrix<Pieces> & moveForBoard(Matrix<Pieces> & board, Move move) {
 
-    board.at(move.xArrivle, move.yArrivle) =
-            board.at(move.xDeParture, move.yDeParture);
-    board.at(move.xDeParture, move.yDeParture) = Empty;
+    cout << "board.at: ";board.at(move.xDeParture, move.yDeParture).print(); cout << endl;
+    //cout << ";P(pawn, white): ";P(pawn, white).print(); cout << endl;
+    if(move.yArrivle == 0 && board.at(move.xDeParture, move.yDeParture) == P(pawn, white)){//отладить эту функци
+            cout << "in  whitePawn " << "- color: " << board.at(move.xArrivle, move.yArrivle).color_piece << " name: " << board.at(move.xArrivle, move.yArrivle).name_piece <<   endl;
+
+            board.at(move.xArrivle, move.yArrivle) = P(queen, white);
+            board.at(move.xDeParture, move.yDeParture) = Empty;
+    }
+    else if(move.yArrivle == 7 && board.at(move.xDeParture, move.yDeParture) == P(pawn, black)){//отладить эту функци
+        cout << "in  blackPawn " << "- color: " << board.at(move.xArrivle, move.yArrivle).color_piece << " name: " << board.at(move.xArrivle, move.yArrivle).name_piece <<   endl;
+            board.at(move.xArrivle, move.yArrivle) = P(queen, black);
+            board.at(move.xDeParture, move.yDeParture) = Empty;
+        }
+    else {
+        board.at(move.xArrivle, move.yArrivle) =
+                    board.at(move.xDeParture, move.yDeParture);
+            board.at(move.xDeParture, move.yDeParture) = Empty;
+            }
+
 
     return board;
 
 }
 
 int counterMove(Matrix<Pieces> &board, color colors, int depth) {
-    Matrix<Pieces> newBoard(board);
+
     if(depth == 0){
     return 1;
     }
-    vector<Move> listMove = everyMoveList(newBoard, colors);
+    vector<Move> listMove = everyMoveList(board, colors);
     int count = 0;
     for(int i = 0; i < (int)listMove.size(); i++) {
+    Matrix<Pieces> newBoard(board);
+        newBoard = moveForBoard(newBoard, listMove.at(i));
         cout << "newBoard : " << endl; newBoard.printBoard();
-        count += counterMove(moveForBoard(newBoard, listMove.at(i)), swapColor(colors), depth - 1);
+        cout << "name_piece: " << newBoard.at(listMove.at(i).xDeParture, listMove.at(i).xDeParture).name_piece << ";" << endl;
+        cout << "list departure Move :" << listMove.at(i).xDeParture << "," << listMove.at(i).yDeParture << ";" << endl;
         cout << "list arrivle Move :" << listMove.at(i).xArrivle << "," << listMove.at(i).yArrivle << ";" << endl;
         cout << "count: " << count<< endl;
+        count += counterMove(newBoard, swapColor(colors), depth - 1);
+
+
     }
     return count;
 }
@@ -239,7 +265,7 @@ pair<int, int> findKing(Matrix<Pieces> &board, color colors) {
     for(int y = 0; y < board.matrHight; y++) {
         for(int x = 0; x < board.matrWidth; x++) {
             if(board.at(x,y).name_piece == king && board.at(x,y).color_piece == colors) {
-                cout << "make_pair" << endl;
+                //cout << "make_pair" << endl;
                 return make_pair(x,y);
             }
 
@@ -259,13 +285,12 @@ vector<Move>& filterIlegalMove(vector<Move> listMove,  Matrix<Pieces> &board, co
     for(int i = 0; i < (int)listMove.size();i++) {
 
         Matrix<Pieces> newBoard(board);
-        newBoard.at(listMove.at(i).xArrivle, listMove.at(i).yArrivle) = newBoard.at(listMove.at(i).xDeParture, listMove.at(i).yDeParture);
-        newBoard.at(listMove.at(i).xDeParture, listMove.at(i).yDeParture) = Empty; //TODO вынести в отдельную функцию строчки ходов
+        moveForBoard(newBoard,listMove.at(i));
         pair<int,int> coordKing = findKing(newBoard, colors);
         if(!checkCheck(coordKing.first, coordKing.second, newBoard)) {
-            cout<< "checkForChek : " << checkCheck(coordKing.first, coordKing.second, newBoard) << endl;
-            newBoard.printBoard();
-            cout << endl;
+            //cout<< "checkForChek : " << checkCheck(coordKing.first, coordKing.second, newBoard) << endl;
+            //newBoard.printBoard();
+            //cout << endl;
             newList->push_back(listMove.at(i));
         }
 
@@ -275,10 +300,9 @@ vector<Move>& filterIlegalMove(vector<Move> listMove,  Matrix<Pieces> &board, co
 
 }
 
-//TODO делаем функцию которая берет список ходов и доску иходит на доске и оценивает ход на легальнотсть ,
 
 
-bool checkOutOfRange(int x, int y, Matrix<Pieces> board) {
+bool checkOutOfRange(int x, int y, Matrix<Pieces> &board) {
     if(x > board.matrWidth-1 || x < 0 || y > board.matrHight-1 || y < 0) {
         return true;
     }
@@ -335,8 +359,8 @@ vector<Move> listMovesKing(int x, int y, Matrix<Pieces> &board) {
     vector<Move> listMove;
     Move doMove;
 
-    int arrY[] = {y+1, y+1, y+1, y, y-1, y-1, y-1, y};
-    int arrX[] = {x+1, x, x-1, x-1, x-1, x, x+1, x+1};
+    array <int, 8> arrY = {y+1, y+1, y+1, y, y-1, y-1, y-1, y};
+    array <int, 8> arrX = {x+1, x, x-1, x-1, x-1, x, x+1, x+1};
 
      for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX[0])); i++) {
          if(!checkOutOfRange(arrX[i], arrY[i], board)){
@@ -354,8 +378,8 @@ vector<Move> listMovesKnight(int x, int y, Matrix<Pieces> &board) {
     vector<Move> listMove;
     Move doMove;
 
-    int arrY[] = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
-    int arrX[] = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
+    array<int, 8> arrY = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
+    array<int, 8> arrX = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
 
     for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX[0])); i++) {
         if(!checkOutOfRange(arrX[i], arrY[i], board)){
@@ -493,7 +517,7 @@ In C++, a Copy Constructor may be called for the following cases:
 
 */
 
-void printMove(Matrix<Pieces> &board, vector<Move> listMove) {
+void printMove(Matrix<Pieces> &board, vector<Move> &listMove) {
     Matrix<Pieces> newBoard(board);
     for(int i = 0; i < (int)listMove.size(); i++) {
 
@@ -508,7 +532,7 @@ void printMove(Matrix<Pieces> &board, vector<Move> listMove) {
 }
 
 
-void printOneMove(Matrix<Pieces> &board, vector<Move> listMove) {
+void printOneMove(Matrix<Pieces> &board, vector<Move> &listMove) {
 
     for(int i = 0; i < (int)listMove.size(); i++) {
         Matrix<Pieces> newBoard(board);
@@ -533,6 +557,8 @@ vector<Move> listMovesQueen(int x, int y, Matrix<Pieces> &board) {
     return listMoves;
 
 }
+
+//TODO вернуть из функций ссылки заменив в аргументах функции на переменные или вернув из вызываемых функций (переданных в качестве аргумента ссылку)
 
 vector<Move> everyMoveList(Matrix<Pieces> &board, color colors)  {
     vector<Move> everyListMove;
@@ -569,24 +595,32 @@ vector<Move> everyMoveList(Matrix<Pieces> &board, color colors)  {
                 continue;
             }
         }
-
     }
-
     return everyListMove;
 }
 
 
+void printBoard(Matrix<Pieces> &board) {
+    char simb = 'a';
+    for (int i = 1; i < 9; ++i) {
+        cout << "  " << i;
+    }
+    cout << endl;
 
-void printBoard(Matrix<Pieces> board) {
+
         for (int y = 0; y < board.matrHight ;y++) {
+
+            cout  <<  simb ;
+            simb++;
+
             for(int x = 0; x < board.matrWidth; x++) {
+
                 board.at(x, y).print();
 
             }
             cout << endl;
         }
     }
-
 
 
 Pieces P(pieces names, color colors) {
@@ -607,8 +641,7 @@ Pieces PE(pieces names) {
 }
 
 
-
-bool checkToRookOrQueenUnif(int xKing, int yKing, Matrix<Pieces> board, int dirX, int dirY) {
+bool checkToRookOrQueenUnif(int xKing, int yKing, Matrix<Pieces> &board, int dirX, int dirY) {
     for (int X = xKing+dirX, Y = yKing+dirY; !checkOutOfRange(X, Y, board); X = X+dirX, Y = Y+dirY) {//переписать это
        //cout << " !checkOutOfRange(X, Y, board)" << checkOutOfRange(X, Y, board) << endl;
         if(board.at(X, Y).name_piece != Empty){
@@ -625,17 +658,14 @@ bool checkToRookOrQueenUnif(int xKing, int yKing, Matrix<Pieces> board, int dirX
             else {
                return false;
             }
-
-
         }
-
     }
     //cout << "false ROOK" << endl;
     return false;
     //throw runtime_error("error in function checkToRookOrQueenUnif");
 }
 
-bool checkToRookOrQueen(int x, int y, Matrix<Pieces> board){
+bool checkToRookOrQueen(int x, int y, Matrix<Pieces> &board){
     return
     checkToRookOrQueenUnif(x, y, board, 1, 0) ||
     checkToRookOrQueenUnif(x, y, board, -1, 0) ||
@@ -643,7 +673,7 @@ bool checkToRookOrQueen(int x, int y, Matrix<Pieces> board){
     checkToRookOrQueenUnif(x, y, board, 0, -1);
 }
 
-bool checkToBishopOrQueenUnif(int xKing, int yKing, Matrix<Pieces> board, int dirX, int dirY ) {// one line
+bool checkToBishopOrQueenUnif(int xKing, int yKing, Matrix<Pieces> &board, int dirX, int dirY ) {// one line
     for(int X = xKing+dirX, Y = yKing+dirY; !checkOutOfRange(X,Y, board) ; X = X+dirX, Y = Y+dirY) {
         if(board.at(X, Y).name_piece != Empty){
             if(board.at(X, Y).name_piece == bishop || board.at(X, Y).name_piece == queen ) {
@@ -669,7 +699,7 @@ bool checkToBishopOrQueenUnif(int xKing, int yKing, Matrix<Pieces> board, int di
     //throw runtime_error("error in function checkToBishopOrQueenUnif");
 }
 
-bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> board) {
+bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> &board) {
     return
     checkToBishopOrQueenUnif(x, y, board, 1, 1) ||
     checkToBishopOrQueenUnif(x, y, board, -1, 1) ||
@@ -679,17 +709,17 @@ bool checkToBishopOrQueen(int x, int y, Matrix<Pieces> board) {
 
 
 
-bool checkToKing(int x, int y, Matrix<Pieces> board) {
+bool checkToKing(int x, int y, Matrix<Pieces> &board) {
 
-    int arrY[] = {y+1, y+1, y+1, y, y-1, y-1, y-1, y};
-    int arrX[] = {x+1, x, x-1, x-1, x-1, x, x+1, x+1};
+    array<int,8> arrY = {y+1, y+1, y+1, y, y-1, y-1, y-1, y};
+    array<int,8> arrX = {x+1, x, x-1, x-1, x-1, x, x+1, x+1};
     for(int i = 0; i < 8; i++) {
-        if(checkOutOfRange(arrX[i], arrY[i], board)){
+        if(checkOutOfRange(arrX.at(i), arrY.at(i), board)){
             continue;
         }
 
-        if(board.at(arrX[i], arrY[i]).name_piece != Empty) {
-            if(board.at(arrX[i], arrY[i]).name_piece != king){
+        if(board.at(arrX.at(i), arrY.at(i)).name_piece != Empty) {
+            if(board.at(arrX.at(i), arrY.at(i)).name_piece != king){
                 continue;
             }
             else {
@@ -701,21 +731,22 @@ bool checkToKing(int x, int y, Matrix<Pieces> board) {
     return false;
 }
 
-bool checkToPawn(int x, int y, Matrix<Pieces> board) {
-    int arrY[] = {y + 1, y + 1, y - 1, y - 1};
-    int arrX[] = {x + 1, x - 1, x + 1, x - 1};
+bool checkToPawn(int x, int y, Matrix<Pieces> &board) {
+    array<int, 4> arrY = {y + 1, y + 1, y - 1, y - 1};
+    array<int, 4> arrX = {x + 1, x - 1, x + 1, x - 1};
+
     for (int i = 0; i < 4; i++) {
-        if(checkOutOfRange(arrX[i], arrY[i], board)){
+        if(checkOutOfRange(arrX.at(i), arrY.at(i), board)){
             continue;
         }
-        if(board.at(arrX[i], arrY[i]).name_piece != Empty) {
-            if(board.at(arrX[i], arrY[i]).name_piece != pawn) {
+        if(board.at(arrX.at(i), arrY.at(i)).name_piece != Empty) {
+            if(board.at(arrX.at(i), arrY.at(i)).name_piece != pawn) {
                 continue;
             }
-            if(board.at(arrX[i], arrY[i]).name_piece == pawn && board.at(x, y).color_piece == board.at(arrX[i], arrY[i]).color_piece) {
+            if(board.at(arrX.at(i), arrY.at(i)).name_piece == pawn && board.at(x, y).color_piece == board.at(arrX.at(i), arrY.at(i)).color_piece) {
                 continue;
             }
-            else if(board.at(arrX[i], arrY[i]).name_piece == pawn && board.at(x, y).color_piece != board.at(arrX[i], arrY[i]).color_piece) {
+            else if(board.at(arrX.at(i), arrY.at(i)).name_piece == pawn && board.at(x, y).color_piece != board.at(arrX.at(i), arrY.at(i)).color_piece) {
                 return true;
             }
         }
@@ -726,24 +757,24 @@ bool checkToPawn(int x, int y, Matrix<Pieces> board) {
 
 
 
+bool checkToKnight(int x, int y, Matrix<Pieces> &board) {
 
-bool checkToKnight(int x, int y, Matrix<Pieces> board) {
-/////////TODO переделать все СИшные масиивы на  array
-    int arrY[] = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
-    int arrX[] = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
+    array<int,8> arrY = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
+    array<int,8> arrX = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
+
     for (int i = 0; i < 8; i++)
     {
-        if(checkOutOfRange(arrX[i], arrY[i], board)){
+        if(checkOutOfRange(arrX.at(i), arrY.at(i), board)){
             continue;
         }
-        if(board.at(arrX[i], arrY[i]).name_piece != Empty) {
-            if(board.at(arrX[i], arrY[i]).name_piece != knight) {
+        if(board.at(arrX.at(i), arrY.at(i)).name_piece != Empty) {
+            if(board.at(arrX.at(i), arrY.at(i)).name_piece != knight) {
                 continue;
             }
-            if(board.at(arrX[i], arrY[i]).name_piece == knight && board.at(x, y).color_piece == board.at(arrX[i], arrY[i]).color_piece) {//проверить есть ли конь в пятне короля?
+            if(board.at(arrX.at(i), arrY.at(i)).name_piece == knight && board.at(x, y).color_piece == board.at(arrX.at(i), arrY.at(i)).color_piece) {//проверить есть ли конь в пятне короля?
                 continue;
             }
-            else if(board.at(arrX[i], arrY[i]).name_piece == knight && board.at(x, y).color_piece != board.at(arrX[i], arrY[i]).color_piece) {
+            else if(board.at(arrX.at(i), arrY.at(i)).name_piece == knight && board.at(x, y).color_piece != board.at(arrX.at(i), arrY.at(i)).color_piece) {
                 return true;
             }
         }
@@ -771,7 +802,7 @@ bool checkForCheck(int x, int y, Matrix<Pieces> &board, color colors) {
     return false;
 }
 
-bool checkCheck(int x, int y, Matrix<Pieces> &board) { //TODO отладить данную функцию TODO после отладки сравнвнить время выполенения программы с СИ.
+bool checkCheck(int x, int y, Matrix<Pieces> &board) {
 
 
     return (checkToRookOrQueen(x, y, board) ||
@@ -785,22 +816,32 @@ bool checkCheck(int x, int y, Matrix<Pieces> &board) { //TODO отладить �
 
 int main (int argc, char* argv[]){
 
-    Pieces board[64] = {//TODO укоротить название функции returnPieces
+    /*Pieces board[64] = {
     P(rook, black), P(bishop, black), P(knight, black), P(queen, black),P(king, black), P(knight, black), P(bishop, black), P (rook, black),
     P(pawn, black), P(pawn, black), P(pawn, black) , P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black),
     PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
     PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
     PE(Empty), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
     PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
-    P(pawn, white), P(pawn, white), P(pawn, white) ,PE(Empty), P(pawn, white), P(pawn, white) , P(pawn, white), P(pawn, white),
+    P(pawn, white), P(pawn, white), P(pawn, white) ,P(pawn, white), P(pawn, white), P(pawn, white) , P(pawn, white), P(pawn, white),
     P(rook, white), P(bishop, white), P(knight, white), P(queen, white), P(king, white), P(knight, white), P(bishop, white), P (rook, white),
-};
+};*/
 
+    Pieces board[64] = {
+        PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+        PE(Empty),PE(Empty), PE(Empty),PE(Empty),P(queen, white), PE(Empty),PE(Empty),PE(Empty),
+        PE(Empty), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+        PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+        PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+        PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+        P(pawn, black), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+        PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+    };
 
     Matrix<Pieces>  chess(8,8);
 
-    Pieces P1;
-    Pieces P2;
+    //Pieces P1;
+    //Pieces P2;
     //cout <<"P1 == P2 " << (P1==P2) << endl; //TODO разобраться с данным предупреждением ISO C++20 considers use of overloaded operator '
     //==' (with operand types 'Pieces' and 'Pieces') to be ambiguous despite there being a unique best viable function
     //Добавил после формальных аргументов const и замечание пропало  в описании ошибки на SOF говорится о том, что const есть только слева,
@@ -824,17 +865,17 @@ int main (int argc, char* argv[]){
     //king1.print();
     printBoard(chess);
 
-    cout << counterMove(chess,white, 1) << endl;
+    cout << counterMove(chess,white, 3) << endl;
 
 
 
     //cout << "checkToBishopOrQueen: " << checkToRookOrQueen(3,3,chess) << endl;
     //Move m;
-    //printVector(everyMoveList(chess,white));
+   // printVector(everyMoveList(chess,white));
     //cout  <<"check?: " << checkForCheck(4,4,chess,white) << endl;
     //printVector(filterIlegalMove(everyMoveList(chess,white), chess, white));
     //printVector(listMovesPawn(2,6,chess));
-    //printVector(listMovesQueen(7,5,chess));
+    //printOneMove(chess, listMovesQueen(1,4,chess));
     //printOneMove(chess, everyMoveList(chess,white));
     //pair<int,int> p = findKing(chess, white);
     //cout << "xKing: " << p.first << endl;
