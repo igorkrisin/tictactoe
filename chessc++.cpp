@@ -278,7 +278,7 @@ pair<int, int> findKing(Matrix<Pieces> &board, color colors) {
 }
 
 
-vector<Move>& filterIlegalMove(vector<Move> listMove,  Matrix<Pieces> &board, color colors) {
+vector<Move>& filterIlegalMove(vector<Move> &listMove,  Matrix<Pieces> &board, color colors) {
     vector<Move> *newList = new vector<Move>;
 
 
@@ -316,7 +316,6 @@ void printVector(vector<Move> arr) {
        cout << arr[i].xArrivle << ", " << arr[i].yArrivle << " ; ";
     }
     cout << "]" << endl;
-
 }
 
 void addMovesInList(int x, int y, int xDir, int yDir, Move &move, vector<Move> &listMove ,  Matrix<Pieces> &board) {
@@ -355,8 +354,8 @@ bool checkAddMove(int x ,int y,int Xorig, int Yorig, Matrix<Pieces> &board) {
     return false;
 }
 
-vector<Move> listMovesKing(int x, int y, Matrix<Pieces> &board) {
-    vector<Move> listMove;
+vector<Move> &listMovesKing(int x, int y, Matrix<Pieces> &board) {
+    vector<Move> *listMove = new vector<Move>;
     Move doMove;
 
     array <int, 8> arrY = {y+1, y+1, y+1, y, y-1, y-1, y-1, y};
@@ -364,18 +363,18 @@ vector<Move> listMovesKing(int x, int y, Matrix<Pieces> &board) {
 
      for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX[0])); i++) {
          if(!checkOutOfRange(arrX[i], arrY[i], board)){
-            addMovesInList(x, y, arrX[i], arrY[i], doMove, listMove, board);
+             addMovesInList(x, y, arrX[i], arrY[i], doMove, *listMove, board);
          }
          else {
              continue;
          }
      }
 
-    return listMove;
+    return *listMove;
 }
 
-vector<Move> listMovesKnight(int x, int y, Matrix<Pieces> &board) {
-    vector<Move> listMove;
+vector<Move> &listMovesKnight(int x, int y, Matrix<Pieces> &board) {
+    vector<Move> *listMove = new vector<Move>;
     Move doMove;
 
     array<int, 8> arrY = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
@@ -383,73 +382,73 @@ vector<Move> listMovesKnight(int x, int y, Matrix<Pieces> &board) {
 
     for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX[0])); i++) {
         if(!checkOutOfRange(arrX[i], arrY[i], board)){
-           addMovesInList(x, y, arrX[i], arrY[i], doMove, listMove, board);
+            addMovesInList(x, y, arrX[i], arrY[i], doMove, *listMove, board);
         }
         else {
             continue;
         }
     }
 
-    return listMove;
+    return *listMove;
 }
 //
-vector<Move> moveSide(int x, int y, Matrix<Pieces> &board, int dirX, int dirY) {
-    vector<Move> listMoves;
+vector<Move>& moveSide(int x, int y, Matrix<Pieces> &board, int dirX, int dirY) {
+    vector<Move> *listMoves = new vector<Move>;
     for (int X = x+dirX, Y = y+dirY; !checkOutOfRange(X, Y, board); X = X+dirX, Y = Y+dirY) {
        if(checkAddMove(X,Y,x,y, board)) {
             if(board.at(X,Y).color_piece != board.at(x,y).color_piece){
-                addMoves(x,y,X, Y, listMoves);
+                addMoves(x,y,X, Y, *listMoves);
                 break;
             }
-            addMoves(x,y,X, Y, listMoves);
+            addMoves(x,y,X, Y, *listMoves);
         }
        else {
 
            break;
        }
     }
-    return listMoves;
+    return *listMoves;
 }
 
-vector<Move> listMovesRook(int x, int y, Matrix<Pieces> &board) {
-    vector<Move> listMoves;
+vector<Move> &listMovesRook(int x, int y, Matrix<Pieces> &board) {
+    vector<Move> *listMoves = new vector<Move>;
 
-    push_back_list(moveSide(x,y,board,1,0), listMoves);
-    push_back_list(moveSide(x,y,board,-1,0), listMoves);
-    push_back_list(moveSide(x,y,board,0,-1), listMoves);
-    push_back_list(moveSide(x,y,board,0,1), listMoves);
+    push_back_list(moveSide(x,y,board,1,0), *listMoves);
+    push_back_list(moveSide(x,y,board,-1,0), *listMoves);
+    push_back_list(moveSide(x,y,board,0,-1), *listMoves);
+    push_back_list(moveSide(x,y,board,0,1), *listMoves);
 
-    return listMoves;
+    return *listMoves;
 }
 
-vector<Move> listMovesBishop(int x, int y, Matrix<Pieces> &board) {
-    vector<Move> listMoves;
-    push_back_list(moveSide(x,y,board,1,1), listMoves);
-    push_back_list(moveSide(x,y,board,-1,1), listMoves);
-    push_back_list(moveSide(x,y,board,1,-1), listMoves);
-    push_back_list(moveSide(x,y,board,-1,-1), listMoves);
+vector<Move> &listMovesBishop(int x, int y, Matrix<Pieces> &board) {
+    vector<Move> *listMoves = new vector<Move>;
+    push_back_list(moveSide(x,y,board,1,1), *listMoves);
+    push_back_list(moveSide(x,y,board,-1,1), *listMoves);
+    push_back_list(moveSide(x,y,board,1,-1), *listMoves);
+    push_back_list(moveSide(x,y,board,-1,-1), *listMoves);
 
-    return listMoves;
+    return *listMoves;
 }
 
-vector<Move> listMovesPawn(int x, int y, Matrix<Pieces> &board) {
-    vector<Move> listMove;
+vector<Move>& listMovesPawn(int x, int y, Matrix<Pieces> &board) {
+    vector<Move> *listMove = new vector<Move>;
     Move doMove;
     bool flag = true;
 
      if(!checkOutOfRange(x,y-1, board) && board.at(x, y).color_piece == white && y != 6
              && board.at(x, y-1).name_piece == Empty) {
 
-         addMovesInList(x, y, x, y-1, doMove, listMove, board);
+         addMovesInList(x, y, x, y-1, doMove, *listMove, board);
      }
      else if(!checkOutOfRange(x,y+1, board) && board.at(x, y).color_piece == black && y != 1
              && board.at(x, y+1).name_piece == Empty) {
 
-         addMovesInList(x, y, x, y+1, doMove, listMove, board);
+         addMovesInList(x, y, x, y+1, doMove, *listMove, board);
      }
      else if(!checkOutOfRange(x,y-1, board) && board.at(x, y).color_piece == white && y == 6
              && board.at(x, y-1).name_piece == Empty) {
-         addMovesInList(x, y, x, y-1, doMove, listMove, board);
+         addMovesInList(x, y, x, y-1, doMove, *listMove, board);
      }
      else if(!checkOutOfRange(x,y-1, board) && board.at(x, y).color_piece == white && y == 6
              && board.at(x, y-1).name_piece != Empty) {
@@ -457,12 +456,12 @@ vector<Move> listMovesPawn(int x, int y, Matrix<Pieces> &board) {
      }
      if(!checkOutOfRange(x,y-2, board) && board.at(x, y).color_piece == white && y == 6
                    && board.at(x, y-2).name_piece == Empty && flag) {
-               addMovesInList(x, y, x, y-2, doMove, listMove, board);
+         addMovesInList(x, y, x, y-2, doMove, *listMove, board);
            }
 
      else if(!checkOutOfRange(x,y+1, board) && board.at(x, y).color_piece == black && y == 1
             && board.at(x, y+1).name_piece == Empty) {
-         addMovesInList(x, y, x, y+1, doMove, listMove, board);
+         addMovesInList(x, y, x, y+1, doMove, *listMove, board);
 
      }
      else if(!checkOutOfRange(x,y-1, board) && board.at(x, y).color_piece == white && y == 6
@@ -471,31 +470,31 @@ vector<Move> listMovesPawn(int x, int y, Matrix<Pieces> &board) {
      }
      if(!checkOutOfRange(x,y+2, board) && board.at(x, y).color_piece == black && y == 1
                    && board.at(x, y+2).name_piece == Empty && flag) {
-               addMovesInList(x, y, x, y+2, doMove, listMove, board);
+         addMovesInList(x, y, x, y+2, doMove, *listMove, board);
            }
      if(board.at(x,y).color_piece == white) {
 
          if (!checkOutOfRange(x-1,y-1, board) && board.at(x-1,y-1).color_piece == black
                  && board.at(x-1, y-1).name_piece != Empty) {
-            addMovesInList(x, y, x-1, y-1, doMove, listMove, board);
+             addMovesInList(x, y, x-1, y-1, doMove, *listMove, board);
          }
          if(!checkOutOfRange(x+1,y-1, board) && board.at(x+1,y-1).color_piece == black
                  && board.at(x+1, y-1).name_piece != Empty){
-            addMovesInList(x, y, x+1, y-1, doMove, listMove, board);
+             addMovesInList(x, y, x+1, y-1, doMove, *listMove, board);
         }
      }
      if(board.at(x,y).color_piece == black) {
 
          if (!checkOutOfRange(x+1,y+1, board) && board.at(x+1,y+1).color_piece == white
                  && board.at(x+1, y+1).name_piece != Empty) {
-            addMovesInList(x, y, x+1, y+1, doMove, listMove, board);
+             addMovesInList(x, y, x+1, y+1, doMove, *listMove, board);
          }
          if(!checkOutOfRange(x-1,y+1, board) && board.at(x-1,y+1).color_piece == white
                  && board.at(x-1, y+1).name_piece != Empty){
-            addMovesInList(x, y, x-1, y+1, doMove, listMove, board);
+             addMovesInList(x, y, x-1, y+1, doMove, *listMove, board);
         }
      }
-    return listMove;
+    return *listMove;
 }
 
 
