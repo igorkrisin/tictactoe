@@ -8,6 +8,8 @@
 #include <fstream>
 #include <array>
 #include <utility>
+#include <regex>
+
 
 
 using namespace std;
@@ -164,19 +166,27 @@ public:
     }
 
     bool operator== (const Pieces &other) const {
-        cout << "!!!overload == : " << (this->name_piece == other.name_piece && this->color_piece == other.color_piece) << endl;
+        //cout << "!!!overload == : " << (this->name_piece == other.name_piece && this->color_piece == other.color_piece) << endl;
         return this->name_piece == other.name_piece && this->color_piece == other.color_piece;
     }
 };
 
+enum castling{rightWhite, leftWhite, rightBlack, leftBlack};
 
 class Move {
-public:
-
+private:
     int xDeParture;
     int yDeParture;
     int xArrivle;
     int yArrivle;
+
+    castling state;
+public:
+
+
+    bool isCastling;
+
+
 
     Move(){
         int xDeParture = 0;
@@ -190,12 +200,63 @@ public:
         this->yDeParture = yDeParture;
         this->xArrivle = xArrivle;
         this->yArrivle = yArrivle;
+        isCastling = false;
+    }
+
+    Move(castling state){
+        this->state = state;
+        isCastling = true;
+
     }
 
     void Print(int xArrivle) {
         cout << this->xArrivle;
     }
 
+    int getXDep(){
+        if(!isCastling){
+            throw domain_error("castling move doesn't have get xDeparture");
+        }
+        return xDeParture;
+    }
+    int getYDep(){
+        if(!isCastling){
+            throw domain_error("castling move doesn't have get yDeparture");
+        }
+        return yDeParture;
+    }
+    int getXArr(){
+        if(!isCastling) {
+            throw domain_error("castling move doesn't have get xArrivle");
+        }
+        return xArrivle;
+    }
+    int getYArr(){
+        if(!isCastling) {
+            throw domain_error("castling move doesn't have get yArrivle");
+        }
+        return yArrivle;
+    }
+
+    castling getState() {
+        if(isCastling) {
+            throw domain_error("standard move doesn't have get castling state");
+        }
+        return state;
+    }
+
+    void setXDep(int xDeparture) {
+        this->xDeParture = xDeparture;
+    }
+    void setYDep(int yDeparture) {
+        this->yDeParture = yDeparture;
+    }
+    void setXArr(int xArrivle) {
+        this->xArrivle = xArrivle;
+    }
+    void setYArr(int yArrivle) {
+        this->yArrivle = yArrivle;
+    }
 };
 
 //////////////////////////////////////////////////////////////////////////////////////// class end///////////////////////////////////////////////////////
@@ -209,33 +270,56 @@ vector<Move> everyMoveList(Matrix<Pieces> &board, color colors);
 color swapColor(color colors);
 void printVector(vector<Move> arr);
 Pieces P(pieces names, color colors);
+bool checkForIllegal(int xDep, int yDep, int xArr, int yArr, Matrix<Pieces> &board, color colors);
 
 //TODO почитать про enpassant
 
 Matrix<Pieces> & moveForBoard(Matrix<Pieces> & board, Move move) {
 
-    cout << "board.at: ";board.at(move.xDeParture, move.yDeParture).print(); cout << endl;
+    //cout << "board.at: ";board.at(move.xDeParture, move.yDeParture).print(); cout << endl;
     //cout << ";P(pawn, white): ";P(pawn, white).print(); cout << endl;
-    if(move.yArrivle == 0 && board.at(move.xDeParture, move.yDeParture) == P(pawn, white)){//отладить эту функци
-            cout << "in  whitePawn " << "- color: " << board.at(move.xArrivle, move.yArrivle).color_piece << " name: " << board.at(move.xArrivle, move.yArrivle).name_piece <<   endl;
+    if(move.getYArr() == 0 && board.at(move.getXDep(), move.getYDep()) == P(pawn, white)){//отладить эту функци
+            //cout << "in  whitePawn " << "- color: " << board.at(move.xArrivle, move.getYArr()).color_piece << " name: " << board.at(move.xArrivle, move.getYArr()).name_piece <<   endl;
 
-            board.at(move.xArrivle, move.yArrivle) = P(queen, white);
-            board.at(move.xDeParture, move.yDeParture) = Empty;
+            board.at(move.getXArr(), move.getYArr()) = P(queen, white);
+            board.at(move.getXDep(), move.getYDep()) = Empty;
     }
-    else if(move.yArrivle == 7 && board.at(move.xDeParture, move.yDeParture) == P(pawn, black)){//отладить эту функци
-        cout << "in  blackPawn " << "- color: " << board.at(move.xArrivle, move.yArrivle).color_piece << " name: " << board.at(move.xArrivle, move.yArrivle).name_piece <<   endl;
-            board.at(move.xArrivle, move.yArrivle) = P(queen, black);
-            board.at(move.xDeParture, move.yDeParture) = Empty;
+    else if(move.getYArr() == 7 && board.at(move.getXDep(), move.getYDep()) == P(pawn, black)){//отладить эту функци
+        //cout << "in  blackPawn " << "- color: " << board.at(move.getXArr(), move.getYArr()).color_piece << " name: " << board.at(move.getXArr(), move.getYArr()).name_piece <<   endl;
+            board.at(move.getXArr(), move.getYArr()) = P(queen, black);
+            board.at(move.getXDep(), move.getYDep()) = Empty;
         }
     else {
-        board.at(move.xArrivle, move.yArrivle) =
-                    board.at(move.xDeParture, move.yDeParture);
-            board.at(move.xDeParture, move.yDeParture) = Empty;
+        board.at(move.getXArr(), move.getYArr()) =
+                    board.at(move.getXDep(), move.getYDep());
+            board.at(move.getXDep(), move.getYDep()) = Empty;
             }
 
-
     return board;
+}
 
+Matrix<Pieces> &moveForBoardCoord(Matrix<Pieces> &board, int xDep, int yDep, int xArr, int yArr ){
+    board.at(xArr, yArr) = board.at(xDep, yDep);
+    board.at(xDep, yDep) = Empty;
+    return board;
+}
+
+Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
+    string coord;
+    cin >> coord;
+    cout << "coord: " << coord << endl;
+    int xDep, yDep, xArr, yArr;
+    xDep = coord[0]-48-1;
+    yDep = coord[1]-97;
+    xArr  = coord[2]-48-1;
+    yArr = coord[3]-97;
+    static const regex r("[1-8][a-h][1-8][a-h]");
+    if(regex_match(coord, r) && checkForIllegal(xDep, yDep,xArr,yArr, board, colors)){
+        return moveForBoardCoord(board ,xDep, yDep, xArr, yArr);
+    }
+    cout << "you entered the wrong coordinate, "  << endl << "xDep = " << xDep  <<
+            "yDep = " << yDep << endl   << "xArr = " << xArr << "yArr = " << yArr << "  try agayn" << endl;
+    return board;
 }
 
 int counterMove(Matrix<Pieces> &board, color colors, int depth) {
@@ -248,17 +332,19 @@ int counterMove(Matrix<Pieces> &board, color colors, int depth) {
     for(int i = 0; i < (int)listMove.size(); i++) {
     Matrix<Pieces> newBoard(board);
         newBoard = moveForBoard(newBoard, listMove.at(i));
-        cout << "newBoard : " << endl; newBoard.printBoard();
-        cout << "name_piece: " << newBoard.at(listMove.at(i).xDeParture, listMove.at(i).xDeParture).name_piece << ";" << endl;
-        cout << "list departure Move :" << listMove.at(i).xDeParture << "," << listMove.at(i).yDeParture << ";" << endl;
-        cout << "list arrivle Move :" << listMove.at(i).xArrivle << "," << listMove.at(i).yArrivle << ";" << endl;
-        cout << "count: " << count<< endl;
+        //cout << "newBoard : " << endl; newBoard.printBoard();
+        //cout << "name_piece: " << newBoard.at(listMove.at(i).getXDep(), listMove.at(i).getXDep()).name_piece << ";" << endl;
+        //cout << "list departure Move :" << listMove.at(i).getXDep() << "," << listMove.at(i).getYDep() << ";" << endl;
+        //cout << "list arrivle Move :" << listMove.at(i).getXArr() << "," << listMove.at(i).getYArr() << ";" << endl;
+        //cout << "count: " << count<< endl;
         count += counterMove(newBoard, swapColor(colors), depth - 1);
 
 
     }
     return count;
 }
+
+// TODO научится работать с GDB debugger
 
 pair<int, int> findKing(Matrix<Pieces> &board, color colors) {
 
@@ -313,7 +399,7 @@ void printVector(vector<Move> arr) {
     cout << "list moves: [";
     for (int i = 0; i < (int)arr.size(); i++)
     {
-       cout << arr[i].xArrivle << ", " << arr[i].yArrivle << " ; ";
+       cout << arr.at(i).getXArr() << ", " << arr.at(i).getYArr() << " ; ";
     }
     cout << "]" << endl;
 }
@@ -322,20 +408,20 @@ void addMovesInList(int x, int y, int xDir, int yDir, Move &move, vector<Move> &
 
         if ((!checkOutOfRange(xDir, yDir, board) && board.at(x, y).color_piece != board.at(xDir,yDir).color_piece)||
             (!checkOutOfRange(xDir, yDir, board) && board.at(xDir,yDir).name_piece == Empty)) {
-            move.xDeParture = x;
-            move.yDeParture = y;
-            move.xArrivle = xDir;
-            move.yArrivle = yDir;
+            move.setXDep(x);
+            move.setYDep(y);
+            move.setXArr(xDir);
+            move.setYArr(yDir);
             listMove.push_back(move);
         }
 }
 
 void addMoves(int &x, int &y, int xDir, int yDir, vector<Move> &listMove) {
     Move move;
-    move.xDeParture = x;
-    move.yDeParture = y;
-    move.xArrivle = xDir;
-    move.yArrivle = yDir;
+    move.setXDep(x);
+    move.setYDep(y);
+    move.setXArr(xDir);
+    move.setYArr(yDir);
     listMove.push_back(move);
 }
 
@@ -361,9 +447,9 @@ vector<Move> &listMovesKing(int x, int y, Matrix<Pieces> &board) {
     array <int, 8> arrY = {y+1, y+1, y+1, y, y-1, y-1, y-1, y};
     array <int, 8> arrX = {x+1, x, x-1, x-1, x-1, x, x+1, x+1};
 
-     for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX[0])); i++) {
-         if(!checkOutOfRange(arrX[i], arrY[i], board)){
-             addMovesInList(x, y, arrX[i], arrY[i], doMove, *listMove, board);
+     for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX.at(0))); i++) {
+         if(!checkOutOfRange(arrX.at(i), arrY.at(i), board)){
+             addMovesInList(x, y, arrX.at(i), arrY.at(i), doMove, *listMove, board);
          }
          else {
              continue;
@@ -373,6 +459,8 @@ vector<Move> &listMovesKing(int x, int y, Matrix<Pieces> &board) {
     return *listMove;
 }
 
+//TODO поправить [] на at
+
 vector<Move> &listMovesKnight(int x, int y, Matrix<Pieces> &board) {
     vector<Move> *listMove = new vector<Move>;
     Move doMove;
@@ -381,8 +469,8 @@ vector<Move> &listMovesKnight(int x, int y, Matrix<Pieces> &board) {
     array<int, 8> arrX = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
 
     for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX[0])); i++) {
-        if(!checkOutOfRange(arrX[i], arrY[i], board)){
-            addMovesInList(x, y, arrX[i], arrY[i], doMove, *listMove, board);
+        if(!checkOutOfRange(arrX.at(i), arrY.at(i), board)){
+            addMovesInList(x, y, arrX.at(i), arrY.at(i), doMove, *listMove, board);
         }
         else {
             continue;
@@ -501,7 +589,7 @@ vector<Move>& listMovesPawn(int x, int y, Matrix<Pieces> &board) {
 void push_back_list(vector<Move> listMove, vector<Move> &everyMoveList) {
 
     for (int i = 0; i < (int)listMove.size(); ++i) {
-        everyMoveList.push_back(listMove[i]);
+        everyMoveList.push_back(listMove.at(i));
     }
 
 }
@@ -521,8 +609,8 @@ void printMove(Matrix<Pieces> &board, vector<Move> &listMove) {
     for(int i = 0; i < (int)listMove.size(); i++) {
 
         Move temp = listMove.at(i);
-        newBoard.at(temp.xArrivle, temp.yArrivle) = newBoard.at(temp.xDeParture, temp.yDeParture);
-        //newBoard.at(temp.xDeParture, temp.yDeParture) = Empty;
+        newBoard.at(temp.getXArr(), temp.getYArr()) = newBoard.at(temp.getXDep(), temp.getYDep());
+        //newBoard.at(temp.getXDep(), temp.getYDep()) = Empty;
         cout << endl;
 
         cout << endl;
@@ -536,8 +624,8 @@ void printOneMove(Matrix<Pieces> &board, vector<Move> &listMove) {
     for(int i = 0; i < (int)listMove.size(); i++) {
         Matrix<Pieces> newBoard(board);
         Move temp = listMove.at(i);
-        newBoard.at(temp.xArrivle, temp.yArrivle) = newBoard.at(temp.xDeParture, temp.yDeParture);
-        newBoard.at(temp.xDeParture, temp.yDeParture) = Empty;
+        newBoard.at(temp.getXArr(), temp.getYArr()) = newBoard.at(temp.getXDep(), temp.getYDep());
+        newBoard.at(temp.getXDep(), temp.getYDep()) = Empty;
         cout << endl;
         newBoard.printBoard();
         cout << endl;
@@ -789,12 +877,27 @@ color swapColor(color colors){
     return white;
 
 }
+
+
+bool checkForIllegal(int xDep, int yDep, int xArr, int yArr, Matrix<Pieces> &board, color colors) {
+    vector<Move> everyList = everyMoveList(board, colors);
+
+    for (int i = 0; i < (int)everyList.size(); ++i) {
+        if(everyList.at(i).getXDep() == xDep && everyList.at(i).getYDep() == yDep
+                && everyList.at(i).getXArr() == xArr && everyList.at(i).getYArr() == yArr) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 bool checkForCheck(int x, int y, Matrix<Pieces> &board, color colors) {
 
-    vector <Move> listEnemy = everyMoveList(board, swapColor(colors));// разворачиваю цвет для того что бы было понятно назначение функции - передаем белый и проверяем белый
+    vector<Move> listEnemy = everyMoveList(board, swapColor(colors));// разворачиваю цвет для того что бы было понятно назначение функции - передаем белый и проверяем белый
 
     for (int i = 0; i < (int)listEnemy.size(); ++i) {
-        if(listEnemy.at(i).xArrivle == x && listEnemy.at(i).yArrivle == y) {
+        if(listEnemy.at(i).getXArr() == x && listEnemy.at(i).getYArr() == y) {
             return true;
         }
     }
@@ -815,7 +918,7 @@ bool checkCheck(int x, int y, Matrix<Pieces> &board) {
 
 int main (int argc, char* argv[]){
 
-    /*Pieces board[64] = {
+    Pieces board[64] = {
     P(rook, black), P(bishop, black), P(knight, black), P(queen, black),P(king, black), P(knight, black), P(bishop, black), P (rook, black),
     P(pawn, black), P(pawn, black), P(pawn, black) , P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black),
     PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
@@ -824,9 +927,9 @@ int main (int argc, char* argv[]){
     PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
     P(pawn, white), P(pawn, white), P(pawn, white) ,P(pawn, white), P(pawn, white), P(pawn, white) , P(pawn, white), P(pawn, white),
     P(rook, white), P(bishop, white), P(knight, white), P(queen, white), P(king, white), P(knight, white), P(bishop, white), P (rook, white),
-};*/
+};
 
-    Pieces board[64] = {
+    /*Pieces board[64] = {
         PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty),PE(Empty), PE(Empty),PE(Empty),P(queen, white), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
@@ -835,7 +938,7 @@ int main (int argc, char* argv[]){
         PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         P(pawn, black), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
-    };
+    };*/
 
     Matrix<Pieces>  chess(8,8);
 
@@ -862,9 +965,11 @@ int main (int argc, char* argv[]){
     //board[0].print();
     //Pieces king1(king, white);
     //king1.print();
+    //TODO сделать основной цикл программы
     printBoard(chess);
+    printBoard(movePlayer(chess, white));
 
-    cout << counterMove(chess,white, 3) << endl;
+    //cout << counterMove(chess,white, 3) << endl;
 
 
 
