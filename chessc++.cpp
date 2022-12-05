@@ -184,7 +184,7 @@ private:
 public:
 
 
-    bool isCastling;
+    bool isCastling = false;
 
 
 
@@ -214,32 +214,32 @@ public:
     }
 
     int getXDep(){
-        if(!isCastling){
+        if(isCastling){
             throw domain_error("castling move doesn't have get xDeparture");
         }
         return xDeParture;
     }
     int getYDep(){
-        if(!isCastling){
+        if(isCastling){
             throw domain_error("castling move doesn't have get yDeparture");
         }
         return yDeParture;
     }
     int getXArr(){
-        if(!isCastling) {
+        if(isCastling) {
             throw domain_error("castling move doesn't have get xArrivle");
         }
         return xArrivle;
     }
     int getYArr(){
-        if(!isCastling) {
+        if(isCastling) {
             throw domain_error("castling move doesn't have get yArrivle");
         }
         return yArrivle;
     }
 
     castling getState() {
-        if(isCastling) {
+        if(!isCastling) {
             throw domain_error("standard move doesn't have get castling state");
         }
         return state;
@@ -267,12 +267,12 @@ bool checkForCheck(int x, int y, Matrix<Pieces> &board, color colors);
 void printOneMove(Matrix<Pieces> &board, vector<Move> &listMove);
 void printMove(Matrix<Pieces> &board, vector<Move> &listMove);
 vector<Move> everyMoveList(Matrix<Pieces> &board, color colors);
-color swapColor(color colors);
+color swapColor(color &colors);
 void printVector(vector<Move> arr);
 Pieces P(pieces names, color colors);
 bool checkForIllegal(int xDep, int yDep, int xArr, int yArr, Matrix<Pieces> &board, color colors);
+bool checkOutOfRange(int x, int y, Matrix<Pieces> &board);
 
-//TODO почитать про enpassant
 
 Matrix<Pieces> & moveForBoard(Matrix<Pieces> & board, Move move) {
 
@@ -306,19 +306,44 @@ Matrix<Pieces> &moveForBoardCoord(Matrix<Pieces> &board, int xDep, int yDep, int
 
 Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
     string coord;
-    cin >> coord;
-    cout << "coord: " << coord << endl;
     int xDep, yDep, xArr, yArr;
-    xDep = coord[0]-48-1;
-    yDep = coord[1]-97;
-    xArr  = coord[2]-48-1;
-    yArr = coord[3]-97;
-    static const regex r("[1-8][a-h][1-8][a-h]");
-    if(regex_match(coord, r) && checkForIllegal(xDep, yDep,xArr,yArr, board, colors)){
-        return moveForBoardCoord(board ,xDep, yDep, xArr, yArr);
+    while(true) {
+        cout << "enter the coordinats in the format 2b2c" << endl << "now move for "; colors == white? cout << "white :":cout <<"black :";
+        cin >> coord;
+        cout << "coord: " << coord << endl;
+        xDep = coord[0]-48-1;
+        yDep = coord[1]-97;
+        xArr  = coord[2]-48-1;
+        yArr = coord[3]-97;
+        if(checkOutOfRange(xArr,yArr, board) && checkOutOfRange(xDep, yDep, board)) {
+            cout << "you entered the wrong coordinate, "  << endl << "xDep = " << xDep  <<
+                     " \tyDep = " << yDep << endl   << "xArr = " << xArr << "\tyArr = " << yArr << "  try agayn" << endl;
+             cout << "Enter coordinats again: " << endl;
+             continue;
+        }
+        if(board.at(xDep, yDep).name_piece == Empty) {
+            cout << "this coordinats empty, choice other coordinats" << endl;
+            continue;
+        }
+
+        static const regex r("[1-8][a-h][1-8][a-h]");
+
+        if( checkForIllegal(xDep, yDep,xArr,yArr, board, colors)) {
+
+            //colors = swapColor(colors);
+            return moveForBoardCoord(board ,xDep, yDep, xArr, yArr);
+        }
+
+        else {
+           cout << "you entered the wrong coordinate, "  << endl << "xDep = " << xDep  <<
+                    " \tyDep = " << yDep << endl   << "xArr = " << xArr << "\tyArr = " << yArr << "  try agayn" << endl;
+            cout << "Enter coordinats again: " << endl;
+                 //<< endl << "now move for "; colors == white? cout << "white :":cout <<"black :" << endl;
+            //cin >> coord;
+            continue;
+        }
     }
-    cout << "you entered the wrong coordinate, "  << endl << "xDep = " << xDep  <<
-            "yDep = " << yDep << endl   << "xArr = " << xArr << "yArr = " << yArr << "  try agayn" << endl;
+
     return board;
 }
 
@@ -459,7 +484,6 @@ vector<Move> &listMovesKing(int x, int y, Matrix<Pieces> &board) {
     return *listMove;
 }
 
-//TODO поправить [] на at
 
 vector<Move> &listMovesKnight(int x, int y, Matrix<Pieces> &board) {
     vector<Move> *listMove = new vector<Move>;
@@ -468,7 +492,7 @@ vector<Move> &listMovesKnight(int x, int y, Matrix<Pieces> &board) {
     array<int, 8> arrY = {y + 2, y + 1, y - 1, y - 2,y - 2, y - 1, y + 1, y + 2};
     array<int, 8> arrX = {x + 1, x + 2, x + 2, x + 1, x - 1, x - 2, x - 2, x - 1};
 
-    for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX[0])); i++) {
+    for (int i = 0; i <(int)(sizeof(arrX)/sizeof(arrX.at(0))); i++) {
         if(!checkOutOfRange(arrX.at(i), arrY.at(i), board)){
             addMovesInList(x, y, arrX.at(i), arrY.at(i), doMove, *listMove, board);
         }
@@ -645,7 +669,6 @@ vector<Move> listMovesQueen(int x, int y, Matrix<Pieces> &board) {
 
 }
 
-//TODO вернуть из функций ссылки заменив в аргументах функции на переменные или вернув из вызываемых функций (переданных в качестве аргумента ссылку)
 
 vector<Move> everyMoveList(Matrix<Pieces> &board, color colors)  {
     vector<Move> everyListMove;
@@ -870,7 +893,7 @@ bool checkToKnight(int x, int y, Matrix<Pieces> &board) {
     return false;//нет угрозы от фигуры - пожтому я false
 }
 
-color swapColor(color colors){
+color swapColor(color &colors){
     if(colors == white) {
         return black;
     }
@@ -915,6 +938,17 @@ bool checkCheck(int x, int y, Matrix<Pieces> &board) {
 
 }
 
+bool checkBoardForBoard(Matrix<Pieces> &board, Matrix<Pieces> &board2){
+    for (int x = 0; x < 8; ++x) {
+        for (int y = 0; y < 8; ++y) {
+            if(board.at(x,y).name_piece != board2.at(x, y).name_piece) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 
 int main (int argc, char* argv[]){
 
@@ -944,7 +978,7 @@ int main (int argc, char* argv[]){
 
     //Pieces P1;
     //Pieces P2;
-    //cout <<"P1 == P2 " << (P1==P2) << endl; //TODO разобраться с данным предупреждением ISO C++20 considers use of overloaded operator '
+    //cout <<"P1 == P2 " << (P1==P2) << endl; // разобраться с данным предупреждением ISO C++20 considers use of overloaded operator '
     //==' (with operand types 'Pieces' and 'Pieces') to be ambiguous despite there being a unique best viable function
     //Добавил после формальных аргументов const и замечание пропало  в описании ошибки на SOF говорится о том, что const есть только слева,
     //а по стандарту 2020г операторы сравнения добавляют новое понятие из переписанных и обращенных кандидатов и
@@ -965,10 +999,18 @@ int main (int argc, char* argv[]){
     //board[0].print();
     //Pieces king1(king, white);
     //king1.print();
-    //TODO сделать основной цикл программы
     printBoard(chess);
-    printBoard(movePlayer(chess, white));
 
+
+    color colors = white;
+    while(true) {
+
+        //cout << "enter the coordinats in the format 2b2c" << endl << "now move for "; colors == white? cout << "white :":cout <<"black :";
+
+        printBoard(movePlayer(chess, colors));
+        colors = swapColor(colors);
+
+    }
     //cout << counterMove(chess,white, 3) << endl;
 
 
