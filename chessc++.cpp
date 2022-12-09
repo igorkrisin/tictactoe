@@ -9,7 +9,7 @@
 #include <array>
 #include <utility>
 #include <regex>
-
+#include <variant>
 
 
 using namespace std;
@@ -165,6 +165,7 @@ public:
         }
     }
 
+
     bool operator== (const Pieces &other) const {
         //cout << "!!!overload == : " << (this->name_piece == other.name_piece && this->color_piece == other.color_piece) << endl;
         return this->name_piece == other.name_piece && this->color_piece == other.color_piece;
@@ -183,11 +184,6 @@ private:
     castling state;
 public:
 
-
-    bool isCastling = false;
-
-
-
     Move(){
         int xDeParture = 0;
         int yDeParture = 0;
@@ -200,50 +196,33 @@ public:
         this->yDeParture = yDeParture;
         this->xArrivle = xArrivle;
         this->yArrivle = yArrivle;
-        isCastling = false;
-    }
-
-    Move(castling state){
-        this->state = state;
-        isCastling = true;
 
     }
+
+
 
     void Print(int xArrivle) {
         cout << this->xArrivle;
     }
 
     int getXDep(){
-        if(isCastling){
-            throw domain_error("castling move doesn't have get xDeparture");
-        }
+
         return xDeParture;
     }
     int getYDep(){
-        if(isCastling){
-            throw domain_error("castling move doesn't have get yDeparture");
-        }
+
         return yDeParture;
     }
     int getXArr(){
-        if(isCastling) {
-            throw domain_error("castling move doesn't have get xArrivle");
-        }
+
         return xArrivle;
     }
     int getYArr(){
-        if(isCastling) {
-            throw domain_error("castling move doesn't have get yArrivle");
-        }
+
         return yArrivle;
     }
 
-    castling getState() {
-        if(!isCastling) {
-            throw domain_error("standard move doesn't have get castling state");
-        }
-        return state;
-    }
+
 
     void setXDep(int xDeparture) {
         this->xDeParture = xDeparture;
@@ -272,20 +251,23 @@ void printVector(vector<Move> arr);
 Pieces P(pieces names, color colors);
 bool checkForIllegal(int xDep, int yDep, int xArr, int yArr, Matrix<Pieces> &board, color colors);
 bool checkOutOfRange(int x, int y, Matrix<Pieces> &board);
+pair<int, int> findKing(Matrix<Pieces> &board, color colors);
+vector<Move> &listMovesKing(int x, int y, Matrix<Pieces> &board);
+vector<Move>& filterIlegalMove(vector<Move> &listMove,  Matrix<Pieces> &board, color colors);
 
 
 Matrix<Pieces> & moveForBoard(Matrix<Pieces> & board, Move move) {
 
-    //cout << "board.at: ";board.at(move.xDeParture, move.yDeParture).print(); cout << endl;
-    //cout << ";P(pawn, white): ";P(pawn, white).print(); cout << endl;
-    if(move.getYArr() == 0 && board.at(move.getXDep(), move.getYDep()) == P(pawn, white)){//отладить эту функци
-            //cout << "in  whitePawn " << "- color: " << board.at(move.xArrivle, move.getYArr()).color_piece << " name: " << board.at(move.xArrivle, move.getYArr()).name_piece <<   endl;
+    cout << "board.at: ";board.at(move.getXDep(), move.getYDep()).print(); cout << endl;
+    cout << ";P(pawn, white): ";P(pawn, white).print(); cout << endl;
+    if(move.getYArr() == 0 && board.at(move.getXDep(), move.getYDep()) == P(pawn, white)){
+            //cout << "in  whitePawn " << "- color: " << board.at(move.getXArr(), move.getYArr()).color_piece << " name: " << board.at(move.getXArr(), move.getYArr()).name_piece <<   endl;
 
             board.at(move.getXArr(), move.getYArr()) = P(queen, white);
             board.at(move.getXDep(), move.getYDep()) = Empty;
     }
-    else if(move.getYArr() == 7 && board.at(move.getXDep(), move.getYDep()) == P(pawn, black)){//отладить эту функци
-        //cout << "in  blackPawn " << "- color: " << board.at(move.getXArr(), move.getYArr()).color_piece << " name: " << board.at(move.getXArr(), move.getYArr()).name_piece <<   endl;
+    else if(move.getYArr() == 7 && board.at(move.getXDep(), move.getYDep()) == P(pawn, black)){
+            //cout << "in  blackPawn " << "- color: " << board.at(move.getXArr(), move.getYArr()).color_piece << " name: " << board.at(move.getXArr(), move.getYArr()).name_piece <<   endl;
             board.at(move.getXArr(), move.getYArr()) = P(queen, black);
             board.at(move.getXDep(), move.getYDep()) = Empty;
         }
@@ -294,13 +276,35 @@ Matrix<Pieces> & moveForBoard(Matrix<Pieces> & board, Move move) {
                     board.at(move.getXDep(), move.getYDep());
             board.at(move.getXDep(), move.getYDep()) = Empty;
             }
-
+     //cout << "return in move";
     return board;
 }
 
+
+bool checkMate(Matrix<Pieces> &board, color colors) {
+    pair<int,int> p = findKing(board, colors);
+
+    //cout << "king x: " <<  p.first << " y: " << p.second << endl;
+    //cout << "vector king: " ;printVector(filterIlegalMove(listMovesKing(p.first,p.second, board), board, colors));
+    if(checkCheck(p.first, p.second, board) && filterIlegalMove(listMovesKing(p.first,p.second, board), board, colors).empty()) {
+        return true;
+    }
+    return false;
+}
+
 Matrix<Pieces> &moveForBoardCoord(Matrix<Pieces> &board, int xDep, int yDep, int xArr, int yArr ){
-    board.at(xArr, yArr) = board.at(xDep, yDep);
-    board.at(xDep, yDep) = Empty;
+    if(yArr == 0 && board.at(xDep, yDep) == P(pawn, white)){
+            board.at(xArr, yArr) = P(queen, white);
+            board.at(xDep, yDep) = Empty;
+    }
+    else if(yArr == 7 && board.at(xDep, yDep) == P(pawn, black)){
+            board.at(xArr, yArr) = P(queen, black);
+            board.at(xDep, yDep) = Empty;
+        }
+    else {
+        board.at(xArr, yArr) = board.at(xDep, yDep);
+        board.at(xDep, yDep) = Empty;
+    }
     return board;
 }
 
@@ -315,6 +319,7 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
         yDep = coord[1]-97;
         xArr  = coord[2]-48-1;
         yArr = coord[3]-97;
+
         if(checkOutOfRange(xArr,yArr, board) && checkOutOfRange(xDep, yDep, board)) {
             cout << "you entered the wrong coordinate, "  << endl << "xDep = " << xDep  <<
                      " \tyDep = " << yDep << endl   << "xArr = " << xArr << "\tyArr = " << yArr << "  try agayn" << endl;
@@ -327,10 +332,8 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
         }
 
         static const regex r("[1-8][a-h][1-8][a-h]");
-
         if( checkForIllegal(xDep, yDep,xArr,yArr, board, colors)) {
 
-            //colors = swapColor(colors);
             return moveForBoardCoord(board ,xDep, yDep, xArr, yArr);
         }
 
@@ -890,7 +893,7 @@ bool checkToKnight(int x, int y, Matrix<Pieces> &board) {
         }
     }
 
-    return false;//нет угрозы от фигуры - пожтому я false
+    return false;//нет угрозы от фигуры - поэтому я false
 }
 
 color swapColor(color &colors){
@@ -949,10 +952,19 @@ bool checkBoardForBoard(Matrix<Pieces> &board, Matrix<Pieces> &board2){
     return true;
 }
 
+void printColor(color colors) {
+
+    if(colors == 0) {
+        cout << "black";
+    }
+    if(colors == 1) {
+        cout << "white";
+    }
+}
 
 int main (int argc, char* argv[]){
 
-    Pieces board[64] = {
+   /* Pieces board[64] = {
     P(rook, black), P(bishop, black), P(knight, black), P(queen, black),P(king, black), P(knight, black), P(bishop, black), P (rook, black),
     P(pawn, black), P(pawn, black), P(pawn, black) , P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black),
     PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
@@ -962,17 +974,17 @@ int main (int argc, char* argv[]){
     P(pawn, white), P(pawn, white), P(pawn, white) ,P(pawn, white), P(pawn, white), P(pawn, white) , P(pawn, white), P(pawn, white),
     P(rook, white), P(bishop, white), P(knight, white), P(queen, white), P(king, white), P(knight, white), P(bishop, white), P (rook, white),
 };
-
-    /*Pieces board[64] = {
-        PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
-        PE(Empty),PE(Empty), PE(Empty),PE(Empty),P(queen, white), PE(Empty),PE(Empty),PE(Empty),
+*/
+    Pieces board[64] = {
+        PE(Empty), P(queen, white), PE(Empty),P(king, black),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+        PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         P(pawn, black), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
-        PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
-    };*/
+        PE(Empty), PE(Empty), PE(Empty),PE(Empty),P(king, white), PE(Empty),PE(Empty),PE(Empty),
+    };
 
     Matrix<Pieces>  chess(8,8);
 
@@ -1002,6 +1014,7 @@ int main (int argc, char* argv[]){
     printBoard(chess);
 
 
+
     color colors = white;
     while(true) {
 
@@ -1009,8 +1022,40 @@ int main (int argc, char* argv[]){
 
         printBoard(movePlayer(chess, colors));
         colors = swapColor(colors);
+        if(checkMate(chess, colors)) {
+            cout << "Game over!" << endl << "MATE for " ; printColor(colors); cout << ", WINNER - "; printColor(swapColor(colors)); cout <<  endl;
+            break;
 
+        }
     }
+    /*variant<Move, castling> move, state;
+
+    Move m;
+    m.setXDep(0);
+    m.setYDep(1);
+    m.setXArr(1);
+    m.setYArr(2);
+
+    move = m;
+
+    castling state1 = rightWhite;
+
+    state = state1;
+
+    cout << "castling state: " << get<castling>(state);
+
+    int getDEp(variant<....> x){
+
+        return get<Move>(x).getYDep
+    }
+
+    cout <<  get<Move>(move).getYDep() << endl;
+
+    vector <variant<Move, castling>> mV, sV;
+    */
+
+    //TODO поменять все вектора на variant сделать функцию кастлинг
+
     //cout << counterMove(chess,white, 3) << endl;
 
 
