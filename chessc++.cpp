@@ -24,6 +24,10 @@ class Matrix
 {
 
 private:
+    bool possCastLeftWhite = false;
+    bool possCastLeftBlack = false;
+    bool possCastRightWhite = false;
+    bool possCastRightBlack = false;
 
     T* matr;
 public:
@@ -39,9 +43,14 @@ public:
         matr = new T [hight*width];
     }
 
-    Matrix(const Matrix &other) {
+    Matrix( Matrix &other) {
         this->matrWidth = other.matrWidth;
         this->matrHight = other.matrHight;
+        this->possCastLeftBlack = other.getPossLB();
+        this->possCastRightWhite = other.getPossRW();
+        this->possCastRightBlack = other.getPossRB();
+        this->possCastLeftWhite = other.getPossLW();
+        
         this->matr = new T[matrHight*matrWidth];
         for (int i = 0; i < matrHight*matrWidth; i++)
         {
@@ -68,7 +77,37 @@ public:
         }
         return matr[y * matrWidth + x];
     }
-
+    
+    
+    bool getPossLW() {
+        return possCastLeftWhite;
+    }
+    bool getPossLB() {
+        return possCastLeftBlack;
+    }
+    bool getPossRW() {
+        return possCastRightWhite;
+    }
+    bool getPossRB() {
+        return possCastRightBlack;
+    }
+    
+    void setPossLW(bool possCastLeftWhite){
+        this->possCastLeftWhite = possCastLeftWhite;
+    }
+    
+    void setPossLB(bool possCastLeftBlack){
+        this->possCastLeftBlack = possCastLeftBlack;
+    }
+    
+    void setPossRW(bool possCastRightWhite){
+        this->possCastRightWhite = possCastRightWhite;
+    }
+    
+    void setPossRB(bool possCastRightBlack){
+        this->possCastRightBlack = possCastRightBlack;
+    }
+    
     void assignmentForArr(T* arr, int x, int y) {
         for(int i = 0; i < x*y; i++) {
             matr[i] = arr[i];
@@ -181,7 +220,7 @@ private:
     int yDeParture;
     int xArrivle;
     int yArrivle;
-
+    
 
 public:
 
@@ -200,6 +239,7 @@ public:
 
     }
 
+   
     vector <variant<Move, castling>> move, state;
 
 
@@ -304,6 +344,8 @@ void addMoves(int &x, int &y, int xDir, int yDir, vector<variant<Move, castling>
     listMove.push_back(move);
 }
 
+
+
 vector<variant<Move, castling>> & Castling(Matrix<Pieces> & board, color colors) {
     //координаты castling для белых
     array <int, 2> kingDepW = {4, 7};
@@ -354,14 +396,14 @@ vector<variant<Move, castling>> & Castling(Matrix<Pieces> & board, color colors)
 Matrix<Pieces> & moveCastlingRight(Matrix<Pieces> & board, color colors){
     cout << "in Move castling" << endl;
 
-    if(colors == black &&  !checkCheck(6,0,board)){
+    if(colors == black){
        board.at(4,0) = Empty;
        board.at(7,0) = Empty;
        board.at(5,0) = P(rook, colors);
        board.at(6,0) = P(king, colors);
        return board;
     }
-    else if (colors == white &&  !checkCheck(6,7,board)){
+    else if (colors == white){
        board.at(4,7) = Empty;
        board.at(7,7) = Empty;
        board.at(5,7) = P(rook, colors);
@@ -376,14 +418,14 @@ Matrix<Pieces> & moveCastlingRight(Matrix<Pieces> & board, color colors){
 Matrix<Pieces> & moveCastlingLeft(Matrix<Pieces> & board, color colors){
     cout << "in Move castling" << endl;
 
-    if(colors == black && !checkCheck(2,0,board)){
+    if(colors == black){
        board.at(4,0) = Empty;
        board.at(0,0) = Empty;
        board.at(3,0) = P(rook, colors);
        board.at(2,0) = P(king, colors);
        return board;
     }
-    else if(colors == white && !checkCheck(2,7,board)){
+    else if(colors == white){
        board.at(4,7) = Empty;
        board.at(0,7) = Empty;
        board.at(3,7) = P(rook, colors);
@@ -393,45 +435,92 @@ Matrix<Pieces> & moveCastlingLeft(Matrix<Pieces> & board, color colors){
  throw invalid_argument("ERROR in function moveCastling ");
 }
 
+void possibCastl(Matrix<Pieces> & board, variant<Move, castling> move){
+    if(holds_alternative<Move>(move)){
+         if(getXDep(move) == 0 && getYDep(move) == 0 && board.getPossLB() == false){
+            board.setPossLB(true);
+        }
+        else if(getXDep(move) == 7 && getYDep(move) == 0 && board.getPossLB() == false){
+            board.setPossRB(true);
+        }
+        else if( getXDep(move) == 0 && getYDep(move) == 7 && board.getPossLB() == false){
+            board.setPossLW(true);
+        }
+        else if(getXDep(move) == 7 && getYDep(move) == 7 && board.getPossLB() == false){
+            board.setPossRW(true);
+        }
+        else if(getXDep(move) == 4 && getYDep(move) == 0 && board.getPossLB() == false){
+              board.setPossLB(true);
+              board.setPossRB(true);
+        }
+        else if(getXDep(move) == 4 && getYDep(move) == 7 && board.getPossLB() == false){
+              board.setPossLW(true);
+              board.setPossRW(true);
+        }
+        else if(holds_alternative<castling>(move)){
+        	if(get<castling>(move) == rightBlack || get<castling>(move) == leftBlack ) {
+        		board.setPossLB(true);
+        		board.setPossRB(true);
+        	}
+        	if(get<castling>(move) == rightWhite || get<castling>(move) == leftWhite ) {
+        	    board.setPossLW(true);
+        	    board.setPossRW(true);
+        	}
+        	
+        	
+        }
+    }
+    cout << "in possible Cast finish" << endl;
+}
+
 Matrix<Pieces> & moveForBoard(Matrix<Pieces> & board, variant<Move, castling> move) {
 
     //cout << "board.at: ";board.at(move.getXDep(), getYDep(move)).print(); cout << endl;
     //cout << ";P(pawn, white): ";P(pawn, white).print(); cout << endl;
-    if(holds_alternative<castling>(move){
+    cout << "in Move  moveForBoard start" << endl;
+    possibCastl(board, move);
     
-    	if(get<castling>(move) == leftWhite){
-    		moveCastlingLeft(board, white);
-    	}
-    	if( get<castling>(move) == leftBlack){
-    	    moveCastlingLeft(board, black);
-    	}
-    	if(get<castling>(move) == rightWhite) {
-    	    moveCastlingLeft(board, white);
-    	}
-    	if(get<castling>(move) == rightBlack){
-    		moveCastlingRight(board, black);
-    	}
-	}
-	
-	if(holds_alternative<Move>(move){
-	    if(getYArr(move) == 0 && board.at(getXDep(move), getYDep(move)) == P(pawn, white)){
-	            //cout << "in  whitePawn " << "- color: " << board.at(getXArr(move), getYArr(move)).color_piece << " name: " << board.at(getXArr(move), getYArr(move)).name_piece <<   endl;
+        cout << "in Move  moveForBoard" << endl;
+        if(holds_alternative<castling>(move) ){
+               cout << "in cast moveForBoard"  << endl;
+               if(get<castling>(move) == leftWhite && !board.getPossLW()){
+                   board.setPossLW(true);
+                   moveCastlingLeft(board, white);
+               }
+               if( get<castling>(move) == leftBlack && !board.getPossLB()){
+                   board.setPossLB(true);
+                   moveCastlingLeft(board, black);
+               }
+               if(get<castling>(move) == rightWhite && !board.getPossRW()) {
+                   board.setPossRW(true);
+                   moveCastlingRight(board, white);
+               }
+               if(get<castling>(move) == rightBlack && !board.getPossRB()){
+                   board.setPossRB(true);
+                   moveCastlingRight(board, black);
+               }
+           }
+        if(holds_alternative<Move>(move)){
+        if(getYArr(move) == 0 && board.at(getXDep(move), getYDep(move)) == P(pawn, white)){
+                cout << "in  whitePawn " << "- color: " << board.at(getXArr(move), getYArr(move)).color_piece << " name: " << board.at(getXArr(move), getYArr(move)).name_piece <<   endl;
 
-	            board.at(getXArr(move), getYArr(move)) = P(queen, white);
-	            board.at(getXDep(move), getYDep(move)) = Empty;
-	    }
-	    else if(getYArr(move) == 7 && board.at(getXDep(move), getYDep(move)) == P(pawn, black)){
-	            //cout << "in  blackPawn " << "- color: " << board.at(getXArr(move), getYArr(move)).color_piece << " name: " << board.at(getXArr(move), getYArr(move)).name_piece <<   endl;
-	            board.at(getXArr(move), getYArr(move)) = P(queen, black);
-	            board.at(getXDep(move), getYDep(move)) = Empty;
-	        }
-	    else {
-	        board.at(getXArr(move), getYArr(move)) =
-	                    board.at(getXDep(move), getYDep(move));
-	            board.at(getXDep(move), getYDep(move)) = Empty;
-	            }
+                board.at(getXArr(move), getYArr(move)) = P(queen, white);
+                board.at(getXDep(move), getYDep(move)) = Empty;
+        }
+        else if(getYArr(move) == 7 && board.at(getXDep(move), getYDep(move)) == P(pawn, black)){
+                cout << "in  blackPawn " << "- color: " << board.at(getXArr(move), getYArr(move)).color_piece << " name: " << board.at(getXArr(move), getYArr(move)).name_piece <<   endl;
+                board.at(getXArr(move), getYArr(move)) = P(queen, black);
+                board.at(getXDep(move), getYDep(move)) = Empty;
+            }
+        else {
+            cout << "getXArr(move): " << getXArr(move) << "getYDep(move): " << getYArr(move) << endl;
+            board.at(getXArr(move), getYArr(move)) =
+                        board.at(getXDep(move), getYDep(move));
+                board.at(getXDep(move), getYDep(move)) = Empty;
+                }
     }
-     //cout << "return in move";
+
+     cout << "return in move";
     return board;
 }
 
@@ -447,16 +536,28 @@ bool checkMate(Matrix<Pieces> &board, color colors) {
     return false;
 }
 
-bool isCastling(Matrix<Pieces> &board, castling state, color colors) {
-	   pair<int,int> p = findKing(board, colors);
+bool isCastling(Matrix<Pieces> &board, castling state, color colors) {//TODO сделать одну функцию которая проверяет возможность кастлинга в ней будут все условия на кастлинг
+       pair<int,int> p = findKing(board, colors);
        vector<variant<Move, castling>> everyList = everyMoveList(board, colors);
         //cout << "everyList: " << endl;printVector(everyList);
         for (int i = 0; i < (int)everyList.size(); ++i) {
            //cout << "state: ";printCastling(state);cout << endl;
            //cout << "holds_alternative<castling>(everyList.at(i)): " << holds_alternative<castling>(everyList.at(i)) <<  endl;
            //cout << "get<castling>(everyList.at(i)): " << get<castling>(everyList.at(i));
-            if(holds_alternative<castling>(everyList.at(i)) && !checkCheck(p.first, p.second, board)){//  TODO Разнести if ами условие не попадания под шах короля в конечной клетке
-                if(state == get<castling>(everyList.at(i))) {
+            if(holds_alternative<castling>(everyList.at(i)) && !checkCheck(p.first, p.second, board)){
+                if(state == get<castling>(everyList.at(i)) && !checkCheck(6,0,board) && board.getPossRB() == false) {
+                    //cout << "get<castling>(everyList.at(i)): !!!" <<  get<castling>(everyList.at(i)) << endl;
+                    return true;
+                }
+                if(state == get<castling>(everyList.at(i))  && !checkCheck(6,7,board) && board.getPossRW() == false) {
+                    //cout << "get<castling>(everyList.at(i)): !!!" <<  get<castling>(everyList.at(i)) << endl;
+                    return true;
+                }
+                if(state == get<castling>(everyList.at(i)) && !checkCheck(2,0,board) && board.getPossLB() == false) {
+                    //cout << "get<castling>(everyList.at(i)): !!!" <<  get<castling>(everyList.at(i)) << endl;
+                    return true;
+                }
+                if(state == get<castling>(everyList.at(i)) && !checkCheck(2,7,board) && board.getPossLW() == false) {
                     //cout << "get<castling>(everyList.at(i)): !!!" <<  get<castling>(everyList.at(i)) << endl;
                     return true;
                 }
@@ -505,26 +606,31 @@ void printColors(color colors) {
 Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
     string coord;
     int xDep = 0, yDep = 0, xArr = 0, yArr = 0;
-    
+     pair<int,int> p = findKing(board, colors);
     while(true) {
 
         cout << "enter the coordinats in the format 2b2c" << endl << "now move for "; colors == white? cout << "white :":cout <<"black :";
         cin >> coord;
         cout << "coord: " << coord << endl;
         
-		
-        if(coord == "0-0" && (isCastling(board, leftWhite) || isCastling(board, rightWhite))){
+        if(coord == "0-0" && isCastling(board, colors==white?rightWhite:rightBlack, colors)){
 
-            return moveCastlingRight(board, colors);
-        }
-        else if(coord == "0-0-0" && (isCastling(board, leftWhite) || isCastling(board, rightWhite))) {
-
-           return moveCastlingLeft(board, colors);
-
+            return moveForBoard(board, colors==white?rightWhite:rightBlack);
         }
 
-		variant<Move, castling>move = createMove(xDep, yDep, xArr, yArr);//TODO добавить условие, тчо кастлинг невозможен при попадании короля под шах в конечной клетке хода короля
-		
+        else if(coord == "0-0-0" && (isCastling(board, colors==white?leftWhite:leftBlack, colors))) {
+
+           return moveForBoard(board, colors==white?leftWhite:leftBlack);
+
+        }
+        else if((coord == "0-0" || coord == "0-0-0") && (!isCastling(board, rightWhite, colors) || !isCastling(board, rightBlack, colors) ||
+                     !isCastling(board, leftWhite, colors) || !isCastling(board, leftBlack, colors))){
+            cout << "you don't can castling, because your king on chek or move for king will do check" << endl;
+            continue;
+        }
+
+
+
         static const regex r("[1-8][a-h][1-8][a-h]");
         if(regex_match(coord, r)){
             cout << " in regex"<<endl;
@@ -533,7 +639,13 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
             xArr  = coord[2]-48-1;
             yArr = coord[3]-97;
         }
-       
+
+        cout << "befor regex" << endl;
+        if (!checkForIllegal(xDep, yDep,xArr,yArr, board, colors)) {
+            cout << "your move is invalid, select other move" << endl;
+            continue;
+        }
+        cout << "1" << endl;
         if(board.at(xDep, yDep).name_piece != Empty && board.at(xDep, yDep).color_piece != colors){
             cout << "you entered the wrong coordinate your color it's , " ;  colors == white? cout << "white " << endl:cout <<"black " << endl << "xDep = " << xDep  <<
                      " \tyDep = " << yDep << endl   << "xArr = " << xArr << "\tyArr = " << yArr << "  try agayn" << endl;
@@ -551,15 +663,47 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
             cout << "this coordinats empty, choice other coordinats" << endl;
             continue;
         }
+        else if(board.at(xDep, yDep).name_piece != king && checkCheck(p.first, p.second, board)){
+            cout << "your king has check,  move for other pieces unavailable. Eliminate check" << endl;
+            continue;
+        }
+
+        if(checkForIllegal(xDep, yDep,xArr,yArr, board, colors)) {
+            if(board.at(xDep, yDep).name_piece == king){
+                variant<Move, castling>move = createMove(xDep, yDep, xArr, yArr);
+                moveForBoard(board, move);
+                board.printBoard();
+                if(checkCheck(xArr, yArr, board)){
+                    cout << "everiList: " ;printVector(everyMoveList(board,swapColor(colors)));
+                    cout << "xDep = " << xDep  << " \tyDep = " << yDep << endl   << "xArr = " << xArr << "\tyArr = " << yArr << endl;
+                    cout << "checkCheck(xArr, yArr, board) : " << checkCheck(xArr, yArr, board)<< endl;
+                    cout << "your king has check, select other move. Eliminate check" << endl;
+                    board.at(xArr, yArr) = Empty;
+                    board.at(xDep, yDep) = P(king, (colors));
+                    board.printBoard();
+                    continue;
+                }
+                else if(!checkCheck(xArr, yArr, board)){
+                    board.at(xArr, yArr) = Empty;
+                    board.at(xDep, yDep) = P(king, (colors));
+                    board.printBoard();
+                    return moveForBoard(board, move);
+                }
+
+            }
+
+            cout << "from movePlaeyr to moveForBoard"<< endl;
+            variant<Move, castling>move = createMove(xDep, yDep, xArr, yArr);
+            return moveForBoard(board, move);
+        }
 
 
-        if(checkForIllegal(xDep, yDep,xArr,yArr, board, colors) &&  !checkCheck(p.first, p.second, board)) {//if по кастлингу вынести отдельно и прописать что ход по кастлингу не возможен - король под шахом
 
-            return moveForBoard(board, move, colors);
-        }//TODO надо сделать возможность хода из под шаха, на данный момент ход сделать невозможно, когда ты под шахом игра встает в тупик
+
+
 
         else {
-           cout << "you entered the wrong coordinateSUMMARY "  << endl << "xDep = " << xDep  <<
+           cout << "you entered the wrong coordinate SUMMARY "  << endl << "xDep = " << xDep  <<
                     " \tyDep = " << yDep << endl   << "xArr = " << xArr << "\tyArr = " << yArr << "  try agayn" << endl;
             cout << "Enter coordinats again: " << endl;
                  //<< endl << "now move for "; colors == white? cout << "white :":cout <<"black :" << endl;
@@ -567,7 +711,7 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
             continue;
         }
     }
-
+    cout << "return board";
     return board;
 }
 
@@ -576,11 +720,11 @@ int counterMove(Matrix<Pieces> &board, color colors, int depth) {
     if(depth == 0){
     return 1;
     }
-    vector<variant<Move, castling>> listMove = everyMoveList(board, colors);
+    vector<variant<Move, castling>> listMove = filterIlegalMove(everyMoveList(board, colors), board, colors);
     int count = 0;
     for(int i = 0; i < (int)listMove.size(); i++) {
     Matrix<Pieces> newBoard(board);
-        newBoard = moveForBoard(newBoard, listMove.at(i), colors);
+        newBoard = moveForBoard(newBoard, listMove.at(i));
         //cout << "newBoard : " << endl; newBoard.printBoard();
         //cout << "name_piece: " << newBoard.at(listMove.at(i).getXDep(), listMove.at(i).getXDep()).name_piece << ";" << endl;
         //cout << "list departure Move :" << listMove.at(i).getXDep() << "," << listMove.at(i).getYDep() << ";" << endl;
@@ -620,7 +764,7 @@ vector<variant<Move, castling>>& filterIlegalMove(vector<variant<Move, castling>
     for(int i = 0; i < (int)listMove.size();i++) {
 
         Matrix<Pieces> newBoard(board);
-        moveForBoard(newBoard,listMove.at(i), colors);
+        moveForBoard(newBoard,listMove.at(i));
         pair<int,int> coordKing = findKing(newBoard, colors);
         if(!checkCheck(coordKing.first, coordKing.second, newBoard)) {
             //cout<< "checkForChek : " << checkCheck(coordKing.first, coordKing.second, newBoard) << endl;
@@ -631,7 +775,7 @@ vector<variant<Move, castling>>& filterIlegalMove(vector<variant<Move, castling>
         }
 
     }
-    push_back_list(Castling(board, colors), *newList);
+    //push_back_list(Castling(board, colors), *newList);
     return *newList;
 
 }
@@ -1152,12 +1296,17 @@ color swapColor(color &colors){
 
 
 bool checkForIllegal(int xDep, int yDep, int xArr, int yArr, Matrix<Pieces> &board, color colors) {
+    //cout << "in checkFor Illegal" << endl;
+
     vector<variant<Move, castling>> everyList = everyMoveList(board, colors);
 
     for (int i = 0; i < (int)everyList.size(); ++i) {
-        if(getXDep(everyList.at(i)) == xDep && getYDep(everyList.at(i)) == yDep
-                && getXArr(everyList.at(i)) == xArr && getYArr(everyList.at(i)) == yArr) {
-            return true;
+        if(holds_alternative<Move>(everyList.at(i))){
+            
+            if(getXDep(everyList.at(i)) == xDep && getYDep(everyList.at(i)) == yDep
+                    && getXArr(everyList.at(i)) == xArr && getYArr(everyList.at(i)) == yArr) {
+                return true;
+            }
         }
     }
     return false;
@@ -1178,7 +1327,7 @@ bool checkForCheck(int x, int y, Matrix<Pieces> &board, color colors) {
 
 bool checkCheck(int x, int y, Matrix<Pieces> &board) {
 
-
+    //cout << "in checkCheck x : " << x << " y: " << y << endl;
     return (checkToRookOrQueen(x, y, board) ||
             checkToBishopOrQueen(x, y, board) ||
             checkToKing(x, y, board) ||
@@ -1223,7 +1372,7 @@ int main (int argc, char* argv[]){
 */
     Pieces board[64] = {
         P(rook, black), PE(Empty), PE(Empty),PE(Empty),P(king, black), PE(Empty),PE(Empty),P(rook, black),
-        PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
+        PE(Empty),PE(Empty), PE(Empty),PE(Empty),P(rook, black), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
