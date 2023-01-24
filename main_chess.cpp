@@ -781,10 +781,7 @@ void minusForPlayer(int &a){
 }
 
 int bestScore(vector<int> evalMove){
-    int bScore = evalMove[0];
-    if(evalMove.size() == 0){
-        cout << "empty list in bestScore" <<endl;
-    }
+    int bScore = evalMove.at(0);
     for (int var = 0; var < (int)evalMove.size(); ++var) {
         if(evalMove.at(var) > bScore){
             bScore = evalMove.at(var);
@@ -794,10 +791,7 @@ int bestScore(vector<int> evalMove){
 }
 
 int minScore(vector<int> evalMove){
-    int mScore = evalMove[0];
-    if(evalMove.size() == 0){
-        cout << "empty list in minScore" <<endl;
-    }
+    int mScore = evalMove.at(0);
     for (int var = 0; var < (int)evalMove.size(); ++var) {
         if(evalMove.at(var) < mScore){
             mScore = evalMove.at(var);
@@ -806,10 +800,10 @@ int minScore(vector<int> evalMove){
     return mScore;
 }
 
-int IndexMaxEMove(vector<int> allEval){
-    int bScore = allEval[0];
+int IndexMaxMove(vector<int> allEval){
+    int bScore = allEval.at(0);
     int index = 0;
-    for (int i = 0; i < (int)allEval.size(); ++i) {
+    for (int i = 0; i < (int)allEval.size(); i++) {
         if(allEval.at(i) > bScore){
             bScore = allEval.at(i);
             index = i;
@@ -819,7 +813,7 @@ int IndexMaxEMove(vector<int> allEval){
 }
 
 int indexMinEl(vector<int> allEvaluat) {
-    int mScore = allEvaluat[0];
+    int mScore = allEvaluat.at(0);
     int index = 0;
     for(int i = 0;i < (int)allEvaluat.size(); i++) {
     if(allEvaluat.at(i) < mScore){
@@ -839,23 +833,33 @@ void printIntVector(vector<int> vec){
 }
 
 int evalMove(Matrix<Pieces> &board, int depth, color colors){
+    vector<int> allEval;
+    vector<variant<Move, castling>> &everyMove = filterIlegalMove(everyMoveList(board, colors), board,  colors);
+    Matrix<Pieces> newBoard(board);
     //board=newBoard
+    //int minSc = 0;
+    //int bestSc = 0;
+    if(everyMove.size() == 0){
+        if(checkCheck(board.xKingWhite,board.yKingWhite,board)){//существенно замедляет скорость выбора хода
+            return 1000000000;
+        }
+        
+        return 0;
+    }
     if(depth == 0){
         return weightAllPieces(board);
     }
     //int i = 0;
    //cout << "in evalMove: " << ++i << endl;
-    vector<int> allEval;
-    vector<variant<Move, castling>> &everyMove = filterIlegalMove(everyMoveList(board, colors), board,  colors);
-    Matrix<Pieces> newBoard(board);
-    for (int i = 0; i < (int)everyMove.size(); ++i) {
+    
+    for (int i = 0; i < (int)everyMove.size(); i++) {
         if(everyMove.size() == 0){
-            cout << " empty Everylist move in evalMove //";
+            //cout << " empty Everylist move in evalMove //";
         }
         
         //cout << i << endl;
         moveForBoard(newBoard, everyMove.at(i));
-        allEval.push_back(evalMove(newBoard,depth-1,colors));
+        allEval.push_back(evalMove(newBoard,depth-1,swapColor(colors)));
        
         
     }
@@ -864,26 +868,22 @@ int evalMove(Matrix<Pieces> &board, int depth, color colors){
     //cout << "return in evalMove" << endl;
     //cout << "minScore: " << minScore(allEval) << endl;
     //cout << "bestScore: " << bestScore(allEval) << endl;
-    return (colors == white?minScore:bestScore)(allEval);
+    //minSc = minScore(allEval);
+    //bestSc = bestScore(allEval);
+    return (colors == white?bestScore:minScore)(allEval);
 }
 
 
 Matrix<Pieces> &moveCompReturn(Matrix<Pieces> &board, color colors){
     vector<variant<Move, castling>> &everyMove = filterIlegalMove(everyMoveList(board, colors), board,  colors);
-    int index = 0;
-    int maxVal = 0;
+    vector<int> evaluat;
     Matrix<Pieces> newBoard(board);
-    cout << "before amountWeig in moveCompRetutn"<< endl;
-    int amountWeight = evalMove(board, 4, colors);
-    cout << "after amountWeig in moveCompRetutn"<< endl;
-    for(int i = 0; i < (int)everyMove.size(); i++){
-        moveForBoard(newBoard, everyMove.at(i));
-        if(amountWeight > maxVal){
-            maxVal = amountWeight;
-            index = i;
-        }
+    for (int i = 0; i < (int)everyMove.size(); ++i) {
+        moveForBoard(newBoard,everyMove.at(i));
+        evaluat.push_back(evalMove(newBoard,3,colors));
     }
-    moveForBoard(board, everyMove.at(index));
+    cout << "IndexMaxMove(evaluat): " << IndexMaxMove(evaluat) << endl;
+    moveForBoard(board, everyMove.at(IndexMaxMove(evaluat)));
 
     return board;
 }
@@ -943,27 +943,24 @@ void printColors(color colors) {
 
 variant<Move, castling> convertZeroToVariant(string str, color colors){
     variant<Move, castling> state;
-    castling state1 = rightBlack;
-    castling state2 = rightWhite;
-    castling state3 = leftBlack;
-    castling state4 = leftWhite;
+   
     //cout << "convToVar"<<endl;
     if(str == "0-0" && colors == black){
-        state = state1;
+        state = rightBlack;
         return state;
     }
     else if(str == "0-0" && colors == white){
-        state = state2;
+        state = rightWhite;
 
         return state;
     }
     else if(str == "0-0-0" && colors == black){
-        state = state3;
+        state = leftBlack;
         return state;
     }
     else if(str == "0-0-0" && colors == white){
         //cout << "in 0-0-0" << endl;
-        state = state4;
+        state = leftWhite;
         //cout << "state= "  << endl;
         return state;
     }
@@ -1858,7 +1855,7 @@ void mainLoop(Matrix<Pieces> &board, color &colors){
             break;
 
         }
-        cout << "swap color" << endl;
+        //cout << "swap color" << endl;
         currentColor = swapColor(currentColor);
 
     }
@@ -1889,7 +1886,7 @@ void countMove(Matrix<Pieces> &board, color colors){
 
 int main (int argc, char* argv[]){
 
-    Pieces board[64] = {
+    /*Pieces board[64] = {
     P(rook, black), P(bishop, black), P(knight, black), P(queen, black),P(king, black), P(knight, black), P(bishop, black), P (rook, black),
     P(pawn, black), P(pawn, black), P(pawn, black) , P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black),
     PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
@@ -1898,10 +1895,10 @@ int main (int argc, char* argv[]){
     PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
     P(pawn, white), P(pawn, white), P(pawn, white) ,P(pawn, white), P(pawn, white), P(pawn, white) , P(pawn, white), P(pawn, white),
     P(rook, white), P(bishop, white), P(knight, white), P(queen, white), P(king, white), P(knight, white), P(bishop, white), P (rook, white),
-};
+};*/
 
 
-    /*Matrix<Pieces> board ({
+    Matrix<Pieces> board ({
         P (rook, black), PE(Empty), PE(Empty),PE(Empty),P(king, black), PE(Empty),PE(Empty),P (rook, black),
         PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), P(pawn, black),PE(Empty),P (rook, white),
         PE(Empty), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
@@ -1909,11 +1906,11 @@ int main (int argc, char* argv[]){
         PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
-        P (rook, white), PE(Empty), PE(Empty),PE(Empty),P(king, white), PE(Empty),PE(Empty),P (rook, white), });*/
+        P (rook, white), PE(Empty), PE(Empty),PE(Empty),P(king, white), PE(Empty),PE(Empty),P (rook, white), });
 
-   /* Matrix<Pieces> board ({
+    /*Matrix<Pieces> board ({
         P(rook, black), P(bishop, black), P(knight, black), P(queen, black),P(king, black), P(knight, black), P(bishop, black), P (rook, black),
-        P(pawn, black), PE(Empty), P(pawn, black) , P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black),
+        P(pawn, black), P(pawn, black), P(pawn, black) , P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black), P(pawn, black),
         PE(Empty), PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
         PE(Empty), PE(Empty),PE(Empty),PE(Empty),PE(Empty), PE(Empty),PE(Empty),PE(Empty),
@@ -1927,13 +1924,13 @@ int main (int argc, char* argv[]){
 
     //cout << weightAllPieces(board);
     
-    Matrix<Pieces> chess(8,8);
-    chess.assignmentForArr(board, 8, 8);
+    mainLoop(board, currentColor);
+    
+    //vector<int> v = {1,2,3,4,5,6,7};
+    //cout << "IndexMaxMove: " << IndexMaxMove(v);
+
     //Matrix <Pieces>  board(8,8);
-    
-    
-    
-    mainLoop(chess, currentColor);
+
     //Pieces P1;
     //Pieces P2;
     //cout <<"P1 == P2 " << (P1==P2) << endl; // разобраться с данным предупреждением ISO C++20 considers use of overloaded operator '
