@@ -769,15 +769,15 @@ int weightAllPieces(Matrix<Pieces> &board){
                 if(board.at(x,y).name_piece == bishop)  weight += wightEachPiece(bishop, board.at(x,y).color_piece);
                 if(board.at(x,y).name_piece == knight)  weight += wightEachPiece(knight, board.at(x,y).color_piece);
                 if(board.at(x,y).name_piece == pawn)    weight += wightEachPiece(pawn, board.at(x,y).color_piece);
-
                 }
             }
         }
     return weight;
 }
 
-void minusForPlayer(int &a){
+int minusForPlayer(int a){
     a *= -1;
+    return a;
 }
 
 int bestScore(vector<int> evalMove){
@@ -841,13 +841,15 @@ int evalMove(Matrix<Pieces> &board, int depth, color colors){
     //int bestSc = 0;
     if(everyMove.size() == 0){
         if(checkCheck(board.xKingWhite,board.yKingWhite,board)){//существенно замедляет скорость выбора хода
-            return 1000000000;
+            cout << "CHECK CHEK In EVAL MOVE"<< endl;
+            return -1000000000;
         }
         
         return 0;
     }
     if(depth == 0){
-        return weightAllPieces(board);
+        //cout << "weightAllPieces(board): " <<  weightAllPieces(board) << endl;
+        return weightAllPieces(newBoard);
     }
     //int i = 0;
    //cout << "in evalMove: " << ++i << endl;
@@ -865,13 +867,20 @@ int evalMove(Matrix<Pieces> &board, int depth, color colors){
     }
    
     //printIntVector(allEval);
-    //cout << "return in evalMove" << endl;
+    //cout << "return in evalMove" << e5hndl;
     //cout << "minScore: " << minScore(allEval) << endl;
     //cout << "bestScore: " << bestScore(allEval) << endl;
     //minSc = minScore(allEval);
     //bestSc = bestScore(allEval);
-    return (colors == white?bestScore:minScore)(allEval);
+    //minusForPlayer(bestScore(allEval));
+    if(colors == white){
+        return  minusForPlayer(minScore(allEval));
+    }
+    
+    return   bestScore(allEval);
+   // return (colors == white?bestScore:minScore)(allEval);
 }
+//white - player, black - io
 
 
 Matrix<Pieces> &moveCompReturn(Matrix<Pieces> &board, color colors){
@@ -882,6 +891,7 @@ Matrix<Pieces> &moveCompReturn(Matrix<Pieces> &board, color colors){
         moveForBoard(newBoard,everyMove.at(i));
         evaluat.push_back(evalMove(newBoard,3,colors));
     }
+    printIntVector(evaluat);cout << endl;
     cout << "IndexMaxMove(evaluat): " << IndexMaxMove(evaluat) << endl;
     moveForBoard(board, everyMove.at(IndexMaxMove(evaluat)));
 
