@@ -865,7 +865,8 @@ int evalMove(Matrix<Pieces> &board, int depth, color colors){
 
 
     }
-    vector<variant<Move, castling>>().swap(everyMove);//delete vector
+    everyMove.clear();//delete vector
+    
 
     //printIntVector(allEval);
     //cout << "return in evalMove" << e5hndl;
@@ -895,7 +896,7 @@ Matrix<Pieces> &moveCompReturn(Matrix<Pieces> &board, color colors){
     printIntVector(evaluat);cout << endl;
     cout << "IndexMaxMove(evaluat): " << IndexMaxMove(evaluat) << endl;
     moveForBoard(board, everyMove.at(IndexMaxMove(evaluat)));
-    vector<variant<Move, castling>>().swap(everyMove);//delete vector
+    everyMove.clear();//delete vector
     return board;
 }
 
@@ -996,14 +997,14 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
         vector<variant<Move, castling>> &everyFilterMove = filterIlegalMove(everyMove, board,  colors);
 
         if(coord == "0-0" && checkMoveInEverList(everyMove, convertZeroToVariant(coord, colors))){
-            vector<variant<Move, castling>>().swap(everyMove);//delete vector
-             moveForBoard(board, colors==white?rightWhite:rightBlack);
-             break;
+            everyMove.clear();//delete vector
+            moveForBoard(board, colors==white?rightWhite:rightBlack);
+            break;
         }
 
         else if(coord == "0-0-0" && checkMoveInEverList(everyMove, convertZeroToVariant(coord, colors))) {
-            vector<variant<Move, castling>>().swap(everyMove);//delete vector
-            vector<variant<Move, castling>>().swap(everyFilterMove);
+            everyMove.clear();//delete vector
+            everyFilterMove.clear();
             moveForBoard(board, colors==white?leftWhite:leftBlack);
             break;
 
@@ -1065,8 +1066,8 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
 
         else if(checkMoveInEverList(everyMove, move)) {
             if(board.at(xDep, yDep).name_piece == king){
-                vector<variant<Move, castling>>().swap(everyMove);//delete vector
-                vector<variant<Move, castling>>().swap(everyFilterMove);
+                everyMove.clear();//delete vector
+                everyFilterMove.clear();
                 moveForBoard(board, move);
                
                 break;
@@ -1085,8 +1086,8 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
                     board.at(xArr, yArr) = Empty;
                     board.at(xDep, yDep) = P(king, (colors));
                     //board.printBoard();
-                    vector<variant<Move, castling>>().swap(everyMove);//delete vector
-                    vector<variant<Move, castling>>().swap(everyFilterMove);
+                    everyMove.clear();//delete vector
+                    everyFilterMove.clear();
                     moveForBoard(board, move);
                     break;
                 }
@@ -1095,8 +1096,8 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
 
             //cout << "from movePlaeyr to moveForBoard"<< endl;
             variant<Move, castling>move = createMove(xDep, yDep, xArr, yArr);
-            vector<variant<Move, castling>>().swap(everyMove);//delete vector
-            vector<variant<Move, castling>>().swap(everyFilterMove);
+            everyMove.clear();//delete vector
+            everyFilterMove.clear();
             moveForBoard(board, move);
             break;
         }
@@ -1174,7 +1175,7 @@ int counterMove(Matrix<Pieces> &board, color colors, int depth) {
 
         count += counterMove(newBoard, swapColor(colors), depth - 1);
     }
-    vector<variant<Move, castling>>().swap(listMove);
+     listMove.clear();//delete vector
     /*for(auto& th:tV){
         th.join();
     }*/
