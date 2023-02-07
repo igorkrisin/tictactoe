@@ -54,7 +54,7 @@ public:
         //cout << "calling constructor" << this << endl;
         matr = new T [hight*width];
     }
-    
+
     Matrix( Matrix &other) {
         this->xKingWhite = other.xKingWhite;
         this->yKingWhite = other.yKingWhite;
@@ -70,12 +70,12 @@ public:
         for (int i = 0; i < matrHight*matrWidth; i++)
         {
            this->matr[i] = other.matr[i];
-            
+
            //cout << "calling constructor" << this << endl;
         }
 
     }
-    
+
     // WSL
     // Amazon AWS - cloud9
 
@@ -106,12 +106,12 @@ public:
 
     ~Matrix(){
         //cout << "calling destructor" << this << endl;
-        
+
         delete [] matr;
         //free(matr);
     }
 
-    
+
 
     T& at(int x, int y) {
         if(x < 0 || x  > matrWidth || y > matrHight || y < 0){
@@ -509,7 +509,7 @@ vector<variant<Move, castling>>& enpassant(Matrix<Pieces> & board, color colors)
     //cout << "empasBlackList: "; board.printEnpass(board.enpasBlack);
     int yEnpasWhite = 3;
     int yEnpasBlack = 4;
-    vector<variant<Move, castling>> *listMoves = new vector<variant<Move, castling>>;
+    vector<variant<Move, castling>> *listMoves = new vector<variant<Move, castling>>;//memory leak
     for (int i = 0; i < (int)board.enpasBlack.size(); ++i) {
         if(colors == black && board.enpasBlack[i] == true){
             //cout << "enter to true enpass black" << endl;
@@ -844,7 +844,7 @@ int evalMove(Matrix<Pieces> &board, int depth, color colors){
             cout << "CHECK CHEK In EVAL MOVE"<< endl;
             return -1000000000;
         }
-        
+
         return 0;
     }
     if(depth == 0){
@@ -853,19 +853,20 @@ int evalMove(Matrix<Pieces> &board, int depth, color colors){
     }
     //int i = 0;
    //cout << "in evalMove: " << ++i << endl;
-    
+
     for (int i = 0; i < (int)everyMove.size(); i++) {
         if(everyMove.size() == 0){
             //cout << " empty Everylist move in evalMove //";
         }
-        
+
         //cout << i << endl;
         moveForBoard(newBoard, everyMove.at(i));
         allEval.push_back(evalMove(newBoard,depth-1,swapColor(colors)));
-       
-        
+
+
     }
-   
+    vector<variant<Move, castling>>().swap(everyMove);//delete vector
+
     //printIntVector(allEval);
     //cout << "return in evalMove" << e5hndl;
     //cout << "minScore: " << minScore(allEval) << endl;
@@ -876,7 +877,7 @@ int evalMove(Matrix<Pieces> &board, int depth, color colors){
     if(colors == white){
         return  minusForPlayer(minScore(allEval));
     }
-    
+
     return   bestScore(allEval);
    // return (colors == white?bestScore:minScore)(allEval);
 }
@@ -894,7 +895,7 @@ Matrix<Pieces> &moveCompReturn(Matrix<Pieces> &board, color colors){
     printIntVector(evaluat);cout << endl;
     cout << "IndexMaxMove(evaluat): " << IndexMaxMove(evaluat) << endl;
     moveForBoard(board, everyMove.at(IndexMaxMove(evaluat)));
-
+    vector<variant<Move, castling>>().swap(everyMove);//delete vector
     return board;
 }
 
@@ -953,7 +954,7 @@ void printColors(color colors) {
 
 variant<Move, castling> convertZeroToVariant(string str, color colors){
     variant<Move, castling> state;
-   
+
     //cout << "convToVar"<<endl;
     if(str == "0-0" && colors == black){
         state = rightBlack;
@@ -990,18 +991,19 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
         cin >> coord;
         cout << "coord: " << coord << endl;
         colors = currentColor;
-        vector<variant<Move, castling>> &everyMove = everyMoveList(board, colors);
+        vector<variant<Move, castling>> &everyMove = everyMoveList(board, colors);//trace memory leak
 
         vector<variant<Move, castling>> &everyFilterMove = filterIlegalMove(everyMove, board,  colors);
 
         if(coord == "0-0" && checkMoveInEverList(everyMove, convertZeroToVariant(coord, colors))){
-
+            vector<variant<Move, castling>>().swap(everyMove);//delete vector
              moveForBoard(board, colors==white?rightWhite:rightBlack);
              break;
         }
 
         else if(coord == "0-0-0" && checkMoveInEverList(everyMove, convertZeroToVariant(coord, colors))) {
-
+            vector<variant<Move, castling>>().swap(everyMove);//delete vector
+            vector<variant<Move, castling>>().swap(everyFilterMove);
             moveForBoard(board, colors==white?leftWhite:leftBlack);
             break;
 
@@ -1063,7 +1065,10 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
 
         else if(checkMoveInEverList(everyMove, move)) {
             if(board.at(xDep, yDep).name_piece == king){
+                vector<variant<Move, castling>>().swap(everyMove);//delete vector
+                vector<variant<Move, castling>>().swap(everyFilterMove);
                 moveForBoard(board, move);
+               
                 break;
                 //board.printBoard();
                 if(checkCheck(xArr, yArr, board)){
@@ -1080,16 +1085,20 @@ Matrix<Pieces> &movePlayer(Matrix<Pieces> &board, color colors){
                     board.at(xArr, yArr) = Empty;
                     board.at(xDep, yDep) = P(king, (colors));
                     //board.printBoard();
-                     moveForBoard(board, move);
-                     break;
+                    vector<variant<Move, castling>>().swap(everyMove);//delete vector
+                    vector<variant<Move, castling>>().swap(everyFilterMove);
+                    moveForBoard(board, move);
+                    break;
                 }
 
             }
 
             //cout << "from movePlaeyr to moveForBoard"<< endl;
             variant<Move, castling>move = createMove(xDep, yDep, xArr, yArr);
-             moveForBoard(board, move);
-             break;
+            vector<variant<Move, castling>>().swap(everyMove);//delete vector
+            vector<variant<Move, castling>>().swap(everyFilterMove);
+            moveForBoard(board, move);
+            break;
         }
 
 
@@ -1165,6 +1174,7 @@ int counterMove(Matrix<Pieces> &board, color colors, int depth) {
 
         count += counterMove(newBoard, swapColor(colors), depth - 1);
     }
+    vector<variant<Move, castling>>().swap(listMove);
     /*for(auto& th:tV){
         th.join();
     }*/
@@ -1350,7 +1360,7 @@ vector<variant<Move, castling>> &listMovesKnight(int x, int y, Matrix<Pieces> &b
 }
 //
 vector<variant<Move, castling>>& moveSide(int x, int y, Matrix<Pieces> &board, int dirX, int dirY) {
-    vector<variant<Move, castling>> *listMoves = new vector<variant<Move, castling>>;
+    vector<variant<Move, castling>> *listMoves = new vector<variant<Move, castling>>;//memory leak
     for (int X = x+dirX, Y = y+dirY; !checkOutOfRange(X, Y, board); X = X+dirX, Y = Y+dirY) {
        if(checkAddMove(X,Y,x,y, board)) {
             if(board.at(X,Y).name_piece != Empty && board.at(X,Y).color_piece != board.at(x,y).color_piece){
@@ -1576,7 +1586,7 @@ vector<variant<Move, castling>>& everyMoveList(Matrix<Pieces> &board, color colo
         }
     }
 
-    push_back_list(enpassant(board, colors), *everyListMove);
+    push_back_list(enpassant(board, colors), *everyListMove);//trace memory leak
     push_back_list(Castling(board, colors), *everyListMove);
     return *everyListMove;
 }
@@ -1854,7 +1864,7 @@ void mainLoop(Matrix<Pieces> &board, color &colors){
         //cout << endl;
         //cout << "where king: ";board.printKingCoord();
         if(colors == white){
-            printBoard(movePlayer(board, colors));
+            printBoard(movePlayer(board, colors));//trace menory leak
         }
         else{
             cout << "move comp: " << endl;
@@ -1933,9 +1943,9 @@ int main (int argc, char* argv[]){
     //countMove(board, white);
 
     //cout << weightAllPieces(board);
-    
-    mainLoop(board, currentColor);
-    
+
+    mainLoop(board, currentColor);//trace memory leak
+
     //vector<int> v = {1,2,3,4,5,6,7};
     //cout << "IndexMaxMove: " << IndexMaxMove(v);
 
